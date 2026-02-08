@@ -65,8 +65,9 @@ function renderMagnifier(clientX, clientY, sourceX, sourceY, zoom = 4, pencil = 
   const size = magCanvas.width;
   const half = size / 2;
   magnifier.style.display = 'block';
-  magnifier.style.left = `${clientX + 16}px`;
-  magnifier.style.top = `${clientY + 16}px`;
+  // Position décalée pour ne pas masquer le pixel pointé (utilise pageX/pageY pour ne pas dépendre du parent)
+  magnifier.style.left = `${clientX + 20}px`;
+  magnifier.style.top = `${clientY - 150}px`;
 
   const isHard = pencil.includes('H') || pencil === 'F';
   magnifier.style.borderColor = isHard ? '#c4b5fd' : '#7c2ae8';
@@ -232,6 +233,7 @@ canvasBW.addEventListener('mouseleave', () => {
   crosshair.style.display = 'none';
   magnifier.style.display = 'none';
 });
+canvasBW.addEventListener('mouseenter', () => { magnifier.style.display = 'block'; });
 
 toggleBwOnly.addEventListener('change', e => {
   canvasOriginal.parentElement.style.display = e.target.checked ? 'none' : 'block';

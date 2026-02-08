@@ -30,6 +30,22 @@
       <div class="drop-hint">Rendu natif, pixel-perfect, mapping Darwin 24 segments</div>
     </section>
 
+    <section class="panel glass controls" id="controls" hidden>
+      <div class="controls-row">
+        <label class="pill toggle"><input type="checkbox" id="toggle-posterize" /> Simplifier les masses</label>
+        <label class="pill toggle">Grille
+          <select id="grid-select">
+            <option value="0">Aucune</option>
+            <option value="3">3 x 3</option>
+            <option value="5">5 x 5</option>
+          </select>
+        </label>
+        <button id="export-guide" class="btn">Exporter le guide de dessin</button>
+      </div>
+      <div class="progress" id="progress-bar"><span></span></div>
+    </section>
+
+    <section class="workspace" id="workspace" hidden>
     <section class="canvas-area" id="canvas-area" hidden>
       <div class="panel glass">
         <div class="panel-head">
@@ -53,6 +69,13 @@
           </div>
         </div>
       </div>
+    </section>
+      <aside class="panel glass palette-panel" id="palette-panel" hidden>
+        <div class="panel-head"><span>Crayons utilisés</span></div>
+        <ul class="palette-list" id="palette-list"></ul>
+        <div class="panel-head" style="margin-top:12px;"><span>Guide de dessin</span></div>
+        <div class="export-output" id="export-output">Clique pour générer le guide.</div>
+      </aside>
     </section>
   </main>
 

@@ -10,6 +10,7 @@
   <!-- Loupe globale placée juste après l'ouverture du body pour sortir des conteneurs relatifs -->
   <div class="magnifier glass" id="magnifier">
     <canvas id="mag-canvas" width="180" height="180"></canvas>
+    <div class="magnifier-value" id="magnifier-value">--</div>
   </div>
 
   <header class="topbar glass">
@@ -24,59 +25,63 @@
       <div class="status-main" id="status-pencil">Crayon : --</div>
       <div class="status-sub" id="status-meta">Valeur : -- • Hex : -- • X:-- Y:--</div>
     </div>
-    <div class="swatch" id="status-swatch"></div>
+    <div class="nav-actions">
+      <div class="swatch" id="status-swatch"></div>
+    </div>
   </header>
 
-  <main class="layout">
-    <section class="drop-zone" id="drop-zone">
+  <main class="app-grid">
+
+    <aside class="sidebar glass leftbar">
       <input type="file" id="file-input" accept="image/*" hidden />
-      <div class="drop-icon">⬆</div>
-      <div class="drop-title">Glisse-dépose ou clique pour charger une image</div>
-      <div class="drop-hint">Rendu natif, pixel-perfect, mapping Darwin 24 segments</div>
+      <button class="btn neon import-btn" id="drop-zone">Import</button>
+    </aside>
+
+    <section class="main-area">
+      <div class="panel glass switcher" id="canvas-area" hidden>
+        <div class="panel-head">
+          <span>Avant / Après</span>
+          <label class="toggle"><input type="checkbox" id="toggle-bw-only" /> Afficher seulement NB</label>
+        </div>
+        <div class="dual-canvas">
+          <div class="canvas-stack">
+            <div class="label-overlay">Avant</div>
+            <canvas id="canvas-original"></canvas>
+          </div>
+          <div class="canvas-stack" id="bw-stack">
+            <div class="label-overlay">Après</div>
+            <canvas id="canvas-bw"></canvas>
+            <div class="crosshair" id="crosshair"></div>
+          </div>
+        </div>
+      </div>
     </section>
 
-    <section class="panel glass controls" id="controls" hidden>
-      <div class="controls-row">
+    <aside class="sidebar glass rightbar" id="workspace" hidden>
+      <div class="panel-section" id="controls">
+        <div class="section-title">Réglages</div>
         <label class="pill toggle"><input type="checkbox" id="toggle-posterize" /> Simplifier les masses</label>
         <label class="pill toggle">Grille
           <input type="range" id="grid-slider" min="0" max="10" step="1" value="0" />
           <span id="grid-value">0x0</span>
         </label>
-        <button id="export-guide" class="btn">Exporter le guide de dessin</button>
-        <button id="export-image" class="btn neon">Exporter ma Fiche de Travail</button>
+        <div class="progress" id="progress-bar"><span></span></div>
       </div>
-      <div class="progress" id="progress-bar"><span></span></div>
-    </section>
 
-    <section class="workspace" id="workspace" hidden>
-    <section class="canvas-area" id="canvas-area" hidden>
-      <div class="panel glass">
-        <div class="panel-head">
-          <span>Original (haute résolution)</span>
-          <label class="toggle"><input type="checkbox" id="toggle-bw-only" /> Afficher seulement NB</label>
-        </div>
-        <div class="canvas-stack">
-          <canvas id="canvas-original"></canvas>
-        </div>
-      </div>
-      <div class="panel glass">
-        <div class="panel-head">
-          <span>Niveaux de gris + Mapping Darwin</span>
-          <span class="pill">Survole ou clique pour analyser</span>
-        </div>
-        <div class="canvas-stack" id="bw-stack">
-          <canvas id="canvas-bw"></canvas>
-          <div class="crosshair" id="crosshair"></div>
-        </div>
-      </div>
-    </section>
-      <aside class="panel glass palette-panel" id="palette-panel" hidden>
-        <div class="panel-head"><span>Crayons utilisés</span></div>
+      <div class="panel-section" id="palette-panel" hidden>
+        <div class="section-title">Crayons utilisés</div>
         <ul class="palette-list" id="palette-list"></ul>
-        <div class="panel-head" style="margin-top:12px;"><span>Guide de dessin</span></div>
-        <div class="export-output" id="export-output">Clique pour générer le guide.</div>
-      </aside>
-    </section>
+      </div>
+
+      <div class="panel-section">
+        <div class="section-title">Actions</div>
+        <div class="actions-bottom">
+          <button id="export-guide" class="btn">Exporter le guide de dessin</button>
+          <button id="export-image" class="btn neon">Exporter ma Fiche de Travail</button>
+          <div class="export-output" id="export-output">Clique pour générer le guide.</div>
+        </div>
+      </div>
+    </aside>
   </main>
 
   <!-- Charge le moteur avant l'UI pour garantir l'accès aux fonctions globales -->

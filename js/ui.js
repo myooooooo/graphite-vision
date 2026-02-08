@@ -64,7 +64,7 @@ function setCrosshair(clientX, clientY) {
   crosshair.style.top = `${clientY - rect.top}px`;
 }
 
-function renderMagnifier(clientX, clientY, sourceX, sourceY, zoom = 4, pencil = '') {
+function renderMagnifier(clientX, clientY, sourceX, sourceY, zoom = 4, pencil = '', grayValue = null) {
   const size = magCanvas.width;
   const half = size / 2;
   magnifier.style.display = 'block';
@@ -94,6 +94,11 @@ function renderMagnifier(clientX, clientY, sourceX, sourceY, zoom = 4, pencil = 
   ctxMag.moveTo(0, half); ctxMag.lineTo(size, half);
   ctxMag.stroke();
   ctxMag.restore();
+
+  if (grayValue !== null) {
+    const mv = document.getElementById('magnifier-value');
+    if (mv) mv.textContent = grayValue;
+  }
 }
 
 function processHover(evt) {
@@ -111,7 +116,7 @@ function processHover(evt) {
 
   updateStatus(gray, pencil, x, y);
   setCrosshair(evt.clientX, evt.clientY);
-  renderMagnifier(evt.clientX, evt.clientY, x, y, 4, pencil);
+  renderMagnifier(evt.clientX, evt.clientY, x, y, 4, pencil, gray);
 }
 
 function processClick(evt) {

@@ -23,7 +23,8 @@ body {
   color: var(--text);
   display: flex;
   flex-direction: column;
-  align-items: center;
+  width: 100%;
+  padding: 20px;
 }
 .glass { backdrop-filter: blur(15px); }
 .topbar {
@@ -39,8 +40,9 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-  width: min(1180px, 96vw);
-  margin: 1.25rem auto 0.75rem;
+  width: 100%;
+  max-width: none;
+  margin: 0 0 12px 0;
 }
 .brand { display: flex; align-items: center; gap: 12px; }
 .logo-dot { width: 14px; height: 14px; border-radius: 50%; background: var(--accent-grad); box-shadow: 0 0 0 6px rgba(147,112,219,0.25); }
@@ -53,10 +55,11 @@ body {
 .nav-actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
 .btn.ghost { background: transparent; border: 1px solid var(--border); box-shadow: none; padding: 8px 12px; }
 
-.app-grid { display: grid; grid-template-columns: 250px minmax(0, 1.2fr) 300px; gap: 2rem; padding: 0 2rem 2.5rem; width: min(1200px, 96vw); margin: 0 auto 48px; align-items: start; }
-.main-area { display: grid; gap: 2rem; }
+.app-grid { display: grid; grid-template-columns: 250px minmax(0, 1fr) 300px; gap: 10px; padding: 0 10px 24px; width: 100%; max-width: none; margin: 0; align-items: start; }
+.app-grid { gap: 30px; padding: 0 10px 24px; }
+.main-area { display: grid; gap: 14px; }
 .main-area > * { margin: 0; }
-.sidebar { padding: 24px; border-radius: var(--radius); border: 1px solid rgba(255,255,255,0.1); background: var(--panel); box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: flex; flex-direction: column; gap: 1.4rem; position: sticky; top: 82px; }
+.sidebar { padding: 24px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: var(--panel); box-shadow: 0 4px 20px rgba(0,0,0,0.3); display: flex; flex-direction: column; gap: 1.4rem; position: sticky; top: 82px; }
 .leftbar { width: 250px; align-items: stretch; }
 .rightbar { width: 300px; }
 .import-btn { width: 100%; padding: 14px; font-size: 16px; letter-spacing: 0.08em; box-shadow: 0 10px 30px rgba(138,43,226,0.45); }
@@ -78,13 +81,13 @@ body {
 .dual-canvas {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1.5rem;
+  gap: 12px;
   justify-items: center;
 }
 .dual-canvas .canvas-stack {
   width: 100%;
-  max-width: 1020px;
-  margin: 0 auto;
+  max-width: none;
+  margin: 0;
 }
 .label-overlay { position: absolute; top: 10px; left: 12px; font-size: 12px; color: var(--muted); background: rgba(0,0,0,0.25); padding: 4px 8px; border-radius: 8px; }
 .switcher { padding: 16px; }
@@ -95,12 +98,14 @@ canvas {
   display: block;
   width: 100%;
   max-width: 100%;
-  max-height: 90vh;
+  max-height: 85vh;
   height: auto;
   object-fit: contain;
   border-radius: 10px;
   background: #140f22;
   image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  image-rendering: -webkit-optimize-contrast;
 }
 .viewport { background: #0a0a0c; border-radius: var(--radius); padding: 18px; }
 .crosshair {
@@ -163,7 +168,8 @@ canvas {
 .status-badge {
   position: relative;
   inset: auto;
-  margin: 0 0 1rem 0;
+  width: min(1180px, 96vw);
+  margin: 0 auto 1rem auto;
   padding: 10px 18px;
   background: rgba(28,20,46,0.9);
   border: 1px solid rgba(255,255,255,0.08);

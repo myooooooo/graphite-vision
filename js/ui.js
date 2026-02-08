@@ -24,6 +24,9 @@ const gridSlider = document.getElementById('grid-slider');
 const gridValue = document.getElementById('grid-value');
 const exportBtn = document.getElementById('export-guide');
 const exportImageBtn = document.getElementById('export-image');
+const gridColorInput = document.getElementById('grid-color');
+const gridThicknessInput = document.getElementById('grid-thickness');
+const gridThicknessValue = document.getElementById('grid-thickness-value');
 const palettePanel = document.getElementById('palette-panel');
 const paletteList = document.getElementById('palette-list');
 const exportOutput = document.getElementById('export-output');
@@ -43,6 +46,8 @@ ctxMag.imageSmoothingEnabled = false;
 let graySnapshot = null;
 let posterizeOn = false;
 let gridDivisions = 0;
+let gridColor = '#8A22BE';
+let gridThickness = 1;
 const paletteSet = new Map();
 
 // --- Helpers ---
@@ -163,8 +168,8 @@ function drawGrid(divisions) {
   const stepX = w / divisions;
   const stepY = h / divisions;
   ctxBW.save();
-  ctxBW.strokeStyle = 'rgba(138, 43, 226, 0.5)';
-  ctxBW.lineWidth = 1;
+  ctxBW.strokeStyle = gridColor;
+  ctxBW.lineWidth = gridThickness;
   ctxBW.font = '12px Inter, sans-serif';
   ctxBW.fillStyle = 'rgba(243,239,255,0.85)';
 
@@ -273,6 +278,17 @@ togglePosterize.addEventListener('change', e => {
 gridSlider.addEventListener('input', e => {
   gridDivisions = parseInt(e.target.value, 10) || 0;
   gridValue.textContent = gridDivisions ? `${gridDivisions}x${gridDivisions}` : '0x0';
+  renderBWView();
+});
+
+gridColorInput.addEventListener('input', e => {
+  gridColor = e.target.value || '#8A22BE';
+  renderBWView();
+});
+
+gridThicknessInput.addEventListener('input', e => {
+  gridThickness = parseFloat(e.target.value) || 1;
+  gridThicknessValue.textContent = `${gridThickness}px`;
   renderBWView();
 });
 

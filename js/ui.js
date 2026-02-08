@@ -230,6 +230,13 @@ async function handleFile(file) {
     canvasArea.hidden = false;
     workspace.hidden = false;
     controls.hidden = false;
+    // Par défaut : vue NB uniquement
+    toggleBwOnly.checked = true;
+    canvasOriginal.parentElement.style.display = 'none';
+    const toggleLabel = document.querySelector('label.toggle');
+    if (toggleLabel) toggleLabel.childNodes.forEach(n => {
+      if (n.nodeType === Node.TEXT_NODE) n.textContent = ' Afficher original et NB';
+    });
     updateStatus('--', '--', '--', '--');
     finishProgress();
     console.log('[ui] handleFile done');
@@ -277,13 +284,19 @@ exportBtn.addEventListener('click', () => {
 
 exportImageBtn.addEventListener('click', async () => {
   if (!graySnapshot) { alert('Charge une image avant d’exporter.'); return; }
+  const usedPencils = Array.from(paletteSet.entries()); // [pencil, gray]
+  if (!usedPencils.length) { showToast('Clique sur l’image pour échantillonner avant export.'); return; }
+
   const w = canvasBW.width;
   const h = canvasBW.height;
+  const legendWidth = 180;
+  const legendHeight = 40 + usedPencils.length * 24;
+  const exportHeight = Math.max(h, legendHeight);
 
   // Canvas temporaire pour composer l’export
   const out = document.createElement('canvas');
-  out.width = w + 220; // espace pour la légende des 24 crayons
-  out.height = h;
+  out.width = w + legendWidth + 20;
+  out.height = exportHeight;
   const octx = out.getContext('2d');
   octx.imageSmoothingEnabled = false;
 
@@ -314,28 +327,29 @@ exportImageBtn.addEventListener('click', async () => {
     octx.restore();
   }
 
-  // 3. Légende 24 crayons à droite
-  const legendX = w + 20;
+  // 3. Légende PENSELS UTILISÉS uniquement
+  const legendX = w + 10;
   octx.save();
   octx.fillStyle = 'rgba(20,15,34,0.9)';
-  octx.fillRect(w, 0, 220, h);
+  octx.fillRect(w, 0, legendWidth, exportHeight);
   octx.strokeStyle = 'rgba(147,112,219,0.35)';
-  octx.strokeRect(w + 0.5, 0.5, 219, h - 1);
+  octx.strokeRect(w + 0.5, 0.5, legendWidth - 1, exportHeight - 1);
   octx.font = '14px Inter, sans-serif';
   octx.fillStyle = '#f3efff';
-  octx.fillText('Gamme Darwin (9H → 9B)', legendX, 24);
-  const total = DARWIN_PENCILS.length;
-  for (let i = 0; i < total; i++) {
-    const p = DARWIN_PENCILS[i];
-    const gray = Math.round((i / (total - 1)) * 255);
-    const y = 50 + i * 20;
-    octx.fillStyle = `rgb(${gray},${gray},${gray})`;
-    octx.fillRect(legendX, y - 12, 24, 16);
-    octx.strokeStyle = 'rgba(147,112,219,0.4)';
-    octx.strokeRect(legendX, y - 12, 24, 16);
-    octx.fillStyle = '#f3efff';
-    octx.fillText(p, legendX + 34, y);
-  }
+  octx.fillText('Crayons utilisés', legendX, 24);
+
+  usedPencils
+    .sort((a, b) => DARWIN_PENCILS.indexOf(a[0]) - DARWIN_PENCILS.indexOf(b[0]))
+    .forEach(([p, g], idx) => {
+      const y = 50 + idx * 24;
+      const gray = g ?? Math.round((DARWIN_PENCILS.indexOf(p) / (DARWIN_PENCILS.length - 1)) * 255);
+      octx.fillStyle = `rgb(${gray},${gray},${gray})`;
+      octx.fillRect(legendX, y - 12, 24, 16);
+      octx.strokeStyle = 'rgba(147,112,219,0.4)';
+      octx.strokeRect(legendX, y - 12, 24, 16);
+      octx.fillStyle = '#f3efff';
+      octx.fillText(p, legendX + 34, y + 2);
+    });
   octx.restore();
 
   // 4. Export local

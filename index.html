@@ -21,27 +21,37 @@
         <div class="subtitle">Digital Graphite Intelligence</div>
       </div>
     </div>
-    <div class="status" id="status-bar">
-      <div class="status-main" id="status-pencil">Crayon : --</div>
-      <div class="status-sub" id="status-meta">Valeur : -- • Hex : -- • X:-- Y:--</div>
-    </div>
     <div class="nav-actions">
       <div class="swatch" id="status-swatch"></div>
     </div>
   </header>
 
+  <div class="status-badge glass" id="status-bar">
+    <span class="status-main" id="status-pencil">Crayon : --</span>
+    <span class="status-sub" id="status-meta">Valeur : -- • Hex : -- • X:-- Y:--</span>
+  </div>
+
   <main class="app-grid">
 
     <aside class="sidebar glass leftbar">
       <input type="file" id="file-input" accept="image/*" hidden />
-      <button class="btn neon import-btn" id="drop-zone">Import</button>
+      <button class="btn neon import-btn" id="drop-zone">Importer une image</button>
+      <div class="panel-section" id="controls">
+        <div class="section-title">Réglages</div>
+        <label class="pill toggle"><input type="checkbox" id="toggle-posterize" /> Simplifier les masses</label>
+        <label class="pill toggle">Grille
+          <input type="range" id="grid-slider" min="0" max="10" step="1" value="0" />
+          <span id="grid-value">0x0</span>
+        </label>
+        <div class="progress" id="progress-bar"><span></span></div>
+      </div>
     </aside>
 
-    <section class="main-area">
+    <section class="main-area viewport">
       <div class="panel glass switcher" id="canvas-area" hidden>
         <div class="panel-head">
           <span>Avant / Après</span>
-          <label class="toggle"><input type="checkbox" id="toggle-bw-only" /> Afficher seulement NB</label>
+          <label class="toggle"><input type="checkbox" id="toggle-bw-only" /> Afficher original + NB</label>
         </div>
         <div class="dual-canvas">
           <div class="canvas-stack">
@@ -58,25 +68,15 @@
     </section>
 
     <aside class="sidebar glass rightbar" id="workspace" hidden>
-      <div class="panel-section" id="controls">
-        <div class="section-title">Réglages</div>
-        <label class="pill toggle"><input type="checkbox" id="toggle-posterize" /> Simplifier les masses</label>
-        <label class="pill toggle">Grille
-          <input type="range" id="grid-slider" min="0" max="10" step="1" value="0" />
-          <span id="grid-value">0x0</span>
-        </label>
-        <div class="progress" id="progress-bar"><span></span></div>
-      </div>
-
       <div class="panel-section" id="palette-panel" hidden>
         <div class="section-title">Crayons utilisés</div>
         <ul class="palette-list" id="palette-list"></ul>
       </div>
 
-      <div class="panel-section">
+      <div class="panel-section actions">
         <div class="section-title">Actions</div>
         <div class="actions-bottom">
-          <button id="export-guide" class="btn">Exporter le guide de dessin</button>
+          <button id="export-guide" class="btn ghost secondary">Exporter le guide de dessin</button>
           <button id="export-image" class="btn neon">Exporter ma Fiche de Travail</button>
           <div class="export-output" id="export-output">Clique pour générer le guide.</div>
         </div>

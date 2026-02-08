@@ -128,8 +128,15 @@
       box-shadow: var(--shadow);
       position: relative;
     }
-    canvas { width: 100%; border-radius: 10px; background: #1f1f1f; }
-    canvas { max-height: 70vh; height: auto; }
+    canvas {
+      width: auto;
+      max-width: 100%;
+      max-height: 70vh;
+      height: auto;
+      border-radius: 10px;
+      background: #1f1f1f;
+      image-rendering: pixelated; /* désactive l'interpolation pour voir chaque pixel */
+    }
     .toggle {
       display: flex;
       align-items: center;
@@ -173,6 +180,24 @@
     }
     .legend { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; font-size: 13px; color: var(--muted); }
     .legend span { color: var(--text); font-weight: 600; }
+
+    #magnifier {
+      position: absolute;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 2px solid var(--accent);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+      pointer-events: none;
+      display: none;
+      z-index: 25;
+    }
+    #mag-canvas {
+      width: 100%;
+      height: 100%;
+      image-rendering: pixelated;
+    }
   </style>
 </head>
 <body>
@@ -209,15 +234,16 @@
         <canvas id="canvas-original"></canvas>
       </div>
       <div class="panel" id="bw-panel">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div>Niveaux de gris + Mapping crayon</div>
-          <div class="pill" id="info-pill">Clique sur l'image pour analyser un pixel</div>
-        </div>
-        <canvas id="canvas-bw"></canvas>
-        <div class="crosshair" id="crosshair" style="display:none;"></div>
-        <div class="tooltip" id="tooltip" style="display:none;"></div>
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>Niveaux de gris + Mapping crayon</div>
+        <div class="pill" id="info-pill">Clique sur l'image pour analyser un pixel</div>
       </div>
+      <canvas id="canvas-bw"></canvas>
+      <div class="crosshair" id="crosshair" style="display:none;"></div>
+      <div class="tooltip" id="tooltip" style="display:none;"></div>
+      <div id="magnifier"><canvas id="mag-canvas" width="180" height="180"></canvas></div>
     </div>
+  </div>
 
     <div class="panel" id="legend-panel" style="display:none;">
       <div style="font-weight:600; margin-bottom:8px;">Échelle des 24 crayons (Darwin)</div>
@@ -246,6 +272,8 @@ const canvasOriginal = document.getElementById('canvas-original');
 const canvasBW = document.getElementById('canvas-bw');
 const ctxOrig = canvasOriginal.getContext('2d');
 const ctxBW = canvasBW.getContext('2d');
+ctxOrig.imageSmoothingEnabled = false;
+ctxBW.imageSmoothingEnabled = false;
 const toggleModeBtn = document.getElementById('toggle-mode');
 const singleToggle = document.getElementById('single-toggle');
 const tooltip = document.getElementById('tooltip');
@@ -255,6 +283,13 @@ const statusPencil = document.getElementById('status-pencil');
 const statusSwatch = document.getElementById('status-swatch');
 const statusValue = document.getElementById('status-value');
 const statusHint = document.getElementById('status-hint');
+const magnifier = document.getElementById('magnifier');
+const magCanvas = document.getElementById('mag-canvas');
+const ctxMag = magCanvas.getContext('2d');
+ctxMag.imageSmoothingEnabled = false;
+
+// Coordonnées dernier point pour crosshair sticky
+let lastClientPos = null;
 
 let currentImage = null;
 
@@ -287,11 +322,10 @@ function loadImageFile(file) {
 
 // Redimensionne les canvas à la largeur dispo tout en gardant le ratio.
 function resizeCanvasToImage(img, canvas) {
-  const maxWidth = canvas.parentElement.clientWidth - 24; // marge panel
-  const scale = Math.min(1, maxWidth / img.width);
-  canvas.width = img.width * scale;
-  canvas.height = img.height * scale;
-  return scale;
+  // Haute résolution : on conserve la taille native du média (pixels réels)
+  canvas.width = img.width;
+  canvas.height = img.height;
+  return 1;
 }
 
 // --- Conversion en niveaux de gris ---
@@ -328,8 +362,8 @@ function mapValueToPencil(gray) {
 
 // Dessine les deux versions (original & NB) et prépare les listeners.
 function drawCanvases() {
-  const scaleO = resizeCanvasToImage(currentImage, canvasOriginal);
-  const scaleB = resizeCanvasToImage(currentImage, canvasBW);
+  resizeCanvasToImage(currentImage, canvasOriginal);
+  resizeCanvasToImage(currentImage, canvasBW);
   // Dessin original
   ctxOrig.drawImage(currentImage, 0, 0, canvasOriginal.width, canvasOriginal.height);
   // Conversion NB
@@ -353,6 +387,30 @@ canvasBW.addEventListener('click', evt => {
   updateStatusBar(gray, pencil);
   showTooltip(evt.clientX, evt.clientY, gray, pencil);
   showCrosshair(evt.clientX, evt.clientY);
+  lastClientPos = { x: evt.clientX, y: evt.clientY };
+});
+
+// Mise à jour en temps réel au survol pour feedback instantané et loupe
+canvasBW.addEventListener('mousemove', evt => {
+  const rect = canvasBW.getBoundingClientRect();
+  const scaleX = canvasBW.width / rect.width;
+  const scaleY = canvasBW.height / rect.height;
+  const x = Math.floor((evt.clientX - rect.left) * scaleX);
+  const y = Math.floor((evt.clientY - rect.top) * scaleY);
+  if (x < 0 || y < 0 || x >= canvasBW.width || y >= canvasBW.height) return;
+  const data = ctxBW.getImageData(x, y, 1, 1).data;
+  const gray = data[0];
+  const pencil = mapValueToPencil(gray);
+  updateStatusBar(gray, pencil, x, y);
+  showMagnifier(evt.clientX, evt.clientY, x, y, gray, 4); // zoom 4x par défaut
+  showCrosshair(evt.clientX, evt.clientY);
+  lastClientPos = { x: evt.clientX, y: evt.clientY };
+});
+
+canvasBW.addEventListener('mouseleave', () => {
+  tooltip.style.display = 'none';
+  crosshair.style.display = 'none';
+  magnifier.style.display = 'none';
 });
 
 function showTooltip(clientX, clientY, gray, pencil) {
@@ -376,11 +434,45 @@ function showCrosshair(clientX, clientY) {
 }
 
 // Met à jour la barre de statut fixe pour éviter tout scroll ou dépassement hors écran
-function updateStatusBar(gray, pencil) {
+function updateStatusBar(gray, pencil, xCoord = '--', yCoord = '--') {
   statusPencil.textContent = `Crayon : ${pencil}`;
-  statusValue.textContent = `Valeur : ${gray}`;
+  statusValue.textContent = `Valeur : ${gray} • X:${xCoord} Y:${yCoord}`;
   statusSwatch.style.background = `rgb(${gray},${gray},${gray})`;
   statusHint.textContent = 'Dernier échantillon';
+}
+
+// Loupe : rendu dans un canvas dédié pour performance
+function showMagnifier(clientX, clientY, x, y, gray, zoom = 4) {
+  const size = magCanvas.width; // 180
+  const half = size / (2);
+  magnifier.style.display = 'block';
+  magnifier.style.left = `${clientX + 20}px`;
+  magnifier.style.top = `${clientY + 20}px`;
+
+  ctxMag.save();
+  ctxMag.clearRect(0, 0, size, size);
+  ctxMag.beginPath();
+  ctxMag.arc(half, half, half - 2, 0, Math.PI * 2);
+  ctxMag.clip();
+
+  // Dessine la zone zoomée depuis le canvas NB sans recalculer l'image
+  ctxMag.drawImage(
+    canvasBW,
+    x - size/(2*zoom), y - size/(2*zoom), size/zoom, size/zoom, // source (autour du pixel)
+    0, 0, size, size                                          // destination pleine taille
+  );
+
+  // Crosshair central 1px
+  ctxMag.strokeStyle = 'rgba(251,191,36,0.9)';
+  ctxMag.lineWidth = 1;
+  ctxMag.beginPath();
+  ctxMag.moveTo(half, 0);
+  ctxMag.lineTo(half, size);
+  ctxMag.moveTo(0, half);
+  ctxMag.lineTo(size, half);
+  ctxMag.stroke();
+
+  ctxMag.restore();
 }
 
 // --- Mode comparaisons & affichages ---

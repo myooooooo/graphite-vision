@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Graphite Vision</title>
-  <link rel="stylesheet" href="style.css" />
+  <title>GRADIENT — Digital Graphite Intelligence</title>
+  <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
-  <header class="topbar">
+  <header class="topbar glass">
     <div class="brand">
       <div class="logo-dot"></div>
       <div>
-        <div class="title">Graphite Vision</div>
-        <div class="subtitle">Analyse de valeurs • Gamme Darwin 9H→9B</div>
+        <div class="title">GRADIENT</div>
+        <div class="subtitle">Digital Graphite Intelligence</div>
       </div>
     </div>
     <div class="status" id="status-bar">
@@ -27,20 +27,20 @@
       <input type="file" id="file-input" accept="image/*" hidden />
       <div class="drop-icon">⬆</div>
       <div class="drop-title">Glisse-dépose ou clique pour charger une image</div>
-      <div class="drop-hint">Formats : JPG, PNG, WebP • Rendu natif pixel-perfect</div>
+      <div class="drop-hint">Rendu natif, pixel-perfect, mapping Darwin 24 segments</div>
     </section>
 
     <section class="canvas-area" id="canvas-area" hidden>
-      <div class="panel">
+      <div class="panel glass">
         <div class="panel-head">
-          <span>Original (pixel-perfect)</span>
+          <span>Original (haute résolution)</span>
           <label class="toggle"><input type="checkbox" id="toggle-bw-only" /> Afficher seulement NB</label>
         </div>
         <div class="canvas-stack">
           <canvas id="canvas-original"></canvas>
         </div>
       </div>
-      <div class="panel">
+      <div class="panel glass">
         <div class="panel-head">
           <span>Niveaux de gris + Mapping Darwin</span>
           <span class="pill">Survole ou clique pour analyser</span>
@@ -48,7 +48,7 @@
         <div class="canvas-stack" id="bw-stack">
           <canvas id="canvas-bw"></canvas>
           <div class="crosshair" id="crosshair"></div>
-          <div class="magnifier" id="magnifier">
+          <div class="magnifier glass" id="magnifier">
             <canvas id="mag-canvas" width="180" height="180"></canvas>
           </div>
         </div>
@@ -56,7 +56,7 @@
     </section>
   </main>
 
-  <script src="script.js"></script>
-  <script src="ui.js"></script>
+  <script src="js/core.js"></script>
+  <script src="js/ui.js"></script>
 </body>
 </html>

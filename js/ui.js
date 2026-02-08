@@ -1,11 +1,11 @@
-// GRADIENT - interactions UI, loupe et affichage temps réel
+// GRADIENT UI - interactions, palette, posterize, grille, export, loupe
 const {
-  mapGrayToPencil,
+  DARWIN_PENCILS,
+  calculatePencilGrade,
   toGrayscale,
   loadImageFile,
   drawImageToCanvas,
-  DARWIN_PENCILS,
-} = window.GRADIENT;
+} = window.gradientEngine;
 
 const fileInput = document.getElementById('file-input');
 const dropZone = document.getElementById('drop-zone');
@@ -40,7 +40,7 @@ ctxMag.imageSmoothingEnabled = false;
 let graySnapshot = null;
 let posterizeOn = false;
 let gridDivisions = 0;
-const paletteSet = new Map(); // pencil -> gray value used
+const paletteSet = new Map();
 
 // --- Helpers ---
 function fmtHex(gray) {
@@ -61,7 +61,6 @@ function setCrosshair(clientX, clientY) {
   crosshair.style.top = `${clientY - rect.top}px`;
 }
 
-// Loupe circulaire avec zoom 4x
 function renderMagnifier(clientX, clientY, sourceX, sourceY, zoom = 4, pencil = '') {
   const size = magCanvas.width;
   const half = size / 2;
@@ -104,7 +103,7 @@ function processHover(evt) {
 
   const idx = (y * canvasBW.width + x) * 4;
   const gray = graySnapshot.data[idx];
-  const pencil = mapGrayToPencil(gray);
+  const pencil = calculatePencilGrade(gray);
 
   updateStatus(gray, pencil, x, y);
   setCrosshair(evt.clientX, evt.clientY);
@@ -121,7 +120,7 @@ function processClick(evt) {
   const y = Math.floor((evt.clientY - rect.top) * scaleY);
   const idx = (y * canvasBW.width + x) * 4;
   const gray = graySnapshot.data[idx];
-  const pencil = mapGrayToPencil(gray);
+  const pencil = calculatePencilGrade(gray);
   addToPalette(pencil, gray);
 }
 
@@ -130,7 +129,7 @@ function addToPalette(pencil, gray) {
   paletteSet.set(pencil, gray);
   const li = document.createElement('li');
   li.className = 'palette-item';
-  li.innerHTML = `<span class=\"palette-swatch\" style=\"background: rgb(${gray},${gray},${gray})\"></span><span>${pencil}</span>`;
+  li.innerHTML = `<span class="palette-swatch" style="background: rgb(${gray},${gray},${gray})"></span><span>${pencil}</span>`;
   paletteList.appendChild(li);
   palettePanel.hidden = false;
 }
@@ -185,7 +184,6 @@ function renderBWView() {
   if (gridDivisions > 0) drawGrid(gridDivisions);
 }
 
-// Drag & Drop
 ['dragenter','dragover'].forEach(evt => dropZone.addEventListener(evt, e => {e.preventDefault(); dropZone.classList.add('dragging');}));
 ['dragleave','drop'].forEach(evt => dropZone.addEventListener(evt, e => {e.preventDefault(); dropZone.classList.remove('dragging');}));
 
@@ -197,12 +195,15 @@ dropZone.addEventListener('drop', e => {
 dropZone.addEventListener('click', () => fileInput.click());
 fileInput.addEventListener('change', e => {
   const file = e.target.files[0];
-  if (file) handleFile(file);
+  if (file) {
+    console.log('[ui] input change file', file.name);
+    handleFile(file);
+  }
 });
 
-// Chargement et conversion
 async function handleFile(file) {
   try {
+    console.log('[ui] handleFile start', file.name);
     showProgress();
     const img = await loadImageFile(file);
     drawImageToCanvas(img, canvasOriginal, ctxOrig);
@@ -217,13 +218,14 @@ async function handleFile(file) {
     controls.hidden = false;
     updateStatus('--', '--', '--', '--');
     finishProgress();
+    console.log('[ui] handleFile done');
   } catch (err) {
     finishProgress(true);
+    console.error('[ui] handleFile error', err);
     alert('Impossible de charger cette image.');
   }
 }
 
-// Interactions
 canvasBW.addEventListener('mousemove', processHover);
 canvasBW.addEventListener('click', processClick);
 canvasBW.addEventListener('mouseleave', () => {

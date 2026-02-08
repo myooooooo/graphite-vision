@@ -23,6 +23,7 @@ const togglePosterize = document.getElementById('toggle-posterize');
 const gridSlider = document.getElementById('grid-slider');
 const gridValue = document.getElementById('grid-value');
 const exportBtn = document.getElementById('export-guide');
+const exportImageBtn = document.getElementById('export-image');
 const palettePanel = document.getElementById('palette-panel');
 const paletteList = document.getElementById('palette-list');
 const exportOutput = document.getElementById('export-output');
@@ -30,6 +31,7 @@ const progressBar = document.getElementById('progress-bar');
 const progressSpan = progressBar.querySelector('span');
 const controls = document.getElementById('controls');
 const workspace = document.getElementById('workspace');
+const successToastId = 'gradient-toast';
 
 const ctxOrig = canvasOriginal.getContext('2d');
 const ctxBW = canvasBW.getContext('2d');
@@ -267,6 +269,103 @@ exportBtn.addEventListener('click', () => {
   exportOutput.textContent = pencils.length ? `Crayons nécessaires : ${pencils.join(', ')}` : 'Aucun crayon détecté pour l’instant.';
   console.log('Guide de dessin - crayons :', pencils);
 });
+
+exportImageBtn.addEventListener('click', async () => {
+  if (!graySnapshot) { alert('Charge une image avant d’exporter.'); return; }
+  const w = canvasBW.width;
+  const h = canvasBW.height;
+
+  // Canvas temporaire pour composer l’export
+  const out = document.createElement('canvas');
+  out.width = w + 220; // espace pour la légende des 24 crayons
+  out.height = h;
+  const octx = out.getContext('2d');
+  octx.imageSmoothingEnabled = false;
+
+  // 1. Image NB (et posterize si activé)
+  const dataToDraw = posterizeOn ? posterize5Levels(graySnapshot) : graySnapshot;
+  octx.putImageData(dataToDraw, 0, 0);
+
+  // 2. Grille si activée (recalcul aligné)
+  if (gridDivisions > 0) {
+    octx.save();
+    octx.strokeStyle = 'rgba(138, 43, 226, 0.5)';
+    octx.lineWidth = 1;
+    octx.font = '12px Inter, sans-serif';
+    octx.fillStyle = 'rgba(243,239,255,0.85)';
+    const stepX = w / gridDivisions;
+    const stepY = h / gridDivisions;
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    for (let i = 1; i < gridDivisions; i++) {
+      const x = stepX * i;
+      octx.beginPath(); octx.moveTo(x, 0); octx.lineTo(x, h); octx.stroke();
+      octx.fillText(String(i + 1), x + 4, 14);
+    }
+    for (let j = 1; j < gridDivisions; j++) {
+      const y = stepY * j;
+      octx.beginPath(); octx.moveTo(0, y); octx.lineTo(w, y); octx.stroke();
+      octx.fillText(letters[j] || j + 1, 6, y - 4);
+    }
+    octx.restore();
+  }
+
+  // 3. Légende 24 crayons à droite
+  const legendX = w + 20;
+  octx.save();
+  octx.fillStyle = 'rgba(20,15,34,0.9)';
+  octx.fillRect(w, 0, 220, h);
+  octx.strokeStyle = 'rgba(147,112,219,0.35)';
+  octx.strokeRect(w + 0.5, 0.5, 219, h - 1);
+  octx.font = '14px Inter, sans-serif';
+  octx.fillStyle = '#f3efff';
+  octx.fillText('Gamme Darwin (9H → 9B)', legendX, 24);
+  const total = DARWIN_PENCILS.length;
+  for (let i = 0; i < total; i++) {
+    const p = DARWIN_PENCILS[i];
+    const gray = Math.round((i / (total - 1)) * 255);
+    const y = 50 + i * 20;
+    octx.fillStyle = `rgb(${gray},${gray},${gray})`;
+    octx.fillRect(legendX, y - 12, 24, 16);
+    octx.strokeStyle = 'rgba(147,112,219,0.4)';
+    octx.strokeRect(legendX, y - 12, 24, 16);
+    octx.fillStyle = '#f3efff';
+    octx.fillText(p, legendX + 34, y);
+  }
+  octx.restore();
+
+  // 4. Export local
+  out.toBlob((blob) => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'gradient-fiche.png';
+    a.click();
+    URL.revokeObjectURL(a.href);
+    showToast('Fiche générée !');
+  }, 'image/png', 1.0);
+});
+
+function showToast(msg) {
+  let toast = document.getElementById(successToastId);
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = successToastId;
+    toast.style.position = 'fixed';
+    toast.style.bottom = '24px';
+    toast.style.right = '24px';
+    toast.style.padding = '12px 16px';
+    toast.style.borderRadius = '10px';
+    toast.style.background = 'rgba(28,20,46,0.9)';
+    toast.style.border = '1px solid rgba(138,43,226,0.5)';
+    toast.style.color = '#f3efff';
+    toast.style.boxShadow = '0 12px 30px rgba(83,45,122,0.45)';
+    toast.style.zIndex = '100000';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.opacity = '1';
+  toast.style.display = 'block';
+  setTimeout(() => { toast.style.opacity = '0'; toast.style.display = 'none'; }, 1800);
+}
 
 function showProgress() {
   progressBar.style.display = 'block';

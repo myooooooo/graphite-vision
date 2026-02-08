@@ -20,7 +20,8 @@ const statusMeta = document.getElementById('status-meta');
 const statusSwatch = document.getElementById('status-swatch');
 const toggleBwOnly = document.getElementById('toggle-bw-only');
 const togglePosterize = document.getElementById('toggle-posterize');
-const gridSelect = document.getElementById('grid-select');
+const gridSlider = document.getElementById('grid-slider');
+const gridValue = document.getElementById('grid-value');
 const exportBtn = document.getElementById('export-guide');
 const palettePanel = document.getElementById('palette-panel');
 const paletteList = document.getElementById('palette-list');
@@ -65,9 +66,9 @@ function renderMagnifier(clientX, clientY, sourceX, sourceY, zoom = 4, pencil = 
   const size = magCanvas.width;
   const half = size / 2;
   magnifier.style.display = 'block';
-  // Position décalée pour ne pas masquer le pixel pointé (utilise pageX/pageY pour ne pas dépendre du parent)
-  magnifier.style.left = `${clientX + 20}px`;
-  magnifier.style.top = `${clientY - 150}px`;
+  // Position centrée autour du curseur (coordonnées viewport)
+  magnifier.style.left = `${clientX}px`;
+  magnifier.style.top = `${clientY}px`;
 
   const isHard = pencil.includes('H') || pencil === 'F';
   magnifier.style.borderColor = isHard ? '#c4b5fd' : '#7c2ae8';
@@ -150,29 +151,34 @@ function posterize5Levels(srcData) {
 
 function drawGrid(divisions) {
   if (!divisions || divisions < 1) return;
-  ctxBW.save();
-  ctxBW.strokeStyle = 'rgba(147,112,219,0.6)';
-  ctxBW.lineWidth = 1;
-  ctxBW.font = '12px Inter, sans-serif';
-  ctxBW.fillStyle = 'rgba(243,239,255,0.8)';
   const w = canvasBW.width;
   const h = canvasBW.height;
   const stepX = w / divisions;
   const stepY = h / divisions;
+  ctxBW.save();
+  ctxBW.strokeStyle = 'rgba(138, 43, 226, 0.5)';
+  ctxBW.lineWidth = 1;
+  ctxBW.font = '12px Inter, sans-serif';
+  ctxBW.fillStyle = 'rgba(243,239,255,0.85)';
+
+  // colonnes
   for (let i = 1; i < divisions; i++) {
+    const x = stepX * i;
     ctxBW.beginPath();
-    ctxBW.moveTo(stepX * i, 0);
-    ctxBW.lineTo(stepX * i, h);
+    ctxBW.moveTo(x, 0);
+    ctxBW.lineTo(x, h);
     ctxBW.stroke();
-    ctxBW.beginPath();
-    ctxBW.moveTo(0, stepY * i);
-    ctxBW.lineTo(w, stepY * i);
-    ctxBW.stroke();
+    ctxBW.fillText(String(i + 1), x + 4, 14);
   }
-  for (let gx = 0; gx < divisions; gx++) {
-    for (let gy = 0; gy < divisions; gy++) {
-      ctxBW.fillText(`${gx+1},${gy+1}`, gx * stepX + 6, gy * stepY + 14);
-    }
+  // lignes
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  for (let j = 1; j < divisions; j++) {
+    const y = stepY * j;
+    ctxBW.beginPath();
+    ctxBW.moveTo(0, y);
+    ctxBW.lineTo(w, y);
+    ctxBW.stroke();
+    ctxBW.fillText(letters[j] || j+1, 6, y - 4);
   }
   ctxBW.restore();
 }
@@ -235,6 +241,12 @@ canvasBW.addEventListener('mouseleave', () => {
 });
 canvasBW.addEventListener('mouseenter', () => { magnifier.style.display = 'block'; });
 
+// Mouvement global de la loupe pour suivre le curseur même si le canvas est en position relative
+window.addEventListener('mousemove', (e) => {
+  magnifier.style.left = `${e.clientX}px`;
+  magnifier.style.top = `${e.clientY}px`;
+});
+
 toggleBwOnly.addEventListener('change', e => {
   canvasOriginal.parentElement.style.display = e.target.checked ? 'none' : 'block';
 });
@@ -244,8 +256,9 @@ togglePosterize.addEventListener('change', e => {
   renderBWView();
 });
 
-gridSelect.addEventListener('change', e => {
+gridSlider.addEventListener('input', e => {
   gridDivisions = parseInt(e.target.value, 10) || 0;
+  gridValue.textContent = gridDivisions ? `${gridDivisions}x${gridDivisions}` : '0x0';
   renderBWView();
 });
 

@@ -7,6 +7,11 @@
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
+  <!-- Loupe globale placée juste après l'ouverture du body pour sortir des conteneurs relatifs -->
+  <div class="magnifier glass" id="magnifier">
+    <canvas id="mag-canvas" width="180" height="180"></canvas>
+  </div>
+
   <header class="topbar glass">
     <div class="brand">
       <div class="logo-dot"></div>
@@ -34,13 +39,11 @@
       <div class="controls-row">
         <label class="pill toggle"><input type="checkbox" id="toggle-posterize" /> Simplifier les masses</label>
         <label class="pill toggle">Grille
-          <select id="grid-select">
-            <option value="0">Aucune</option>
-            <option value="3">3 x 3</option>
-            <option value="5">5 x 5</option>
-          </select>
+          <input type="range" id="grid-slider" min="0" max="10" step="1" value="0" />
+          <span id="grid-value">0x0</span>
         </label>
         <button id="export-guide" class="btn">Exporter le guide de dessin</button>
+        <button id="export-image" class="btn neon">Exporter ma Fiche de Travail</button>
       </div>
       <div class="progress" id="progress-bar"><span></span></div>
     </section>
@@ -64,9 +67,6 @@
         <div class="canvas-stack" id="bw-stack">
           <canvas id="canvas-bw"></canvas>
           <div class="crosshair" id="crosshair"></div>
-          <div class="magnifier glass" id="magnifier">
-            <canvas id="mag-canvas" width="180" height="180"></canvas>
-          </div>
         </div>
       </div>
     </section>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Graphite Vision</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo-dot"></div>
+      <div>
+        <div class="title">Graphite Vision</div>
+        <div class="subtitle">Analyse de valeurs • Gamme Darwin 9H→9B</div>
+      </div>
+    </div>
+    <div class="status" id="status-bar">
+      <div class="status-main" id="status-pencil">Crayon : --</div>
+      <div class="status-sub" id="status-meta">Valeur : -- • Hex : -- • X:-- Y:--</div>
+    </div>
+    <div class="swatch" id="status-swatch"></div>
+  </header>
+
+  <main class="layout">
+    <section class="drop-zone" id="drop-zone">
+      <input type="file" id="file-input" accept="image/*" hidden />
+      <div class="drop-icon">⬆</div>
+      <div class="drop-title">Glisse-dépose ou clique pour charger une image</div>
+      <div class="drop-hint">Formats : JPG, PNG, WebP • Rendu natif pixel-perfect</div>
+    </section>
+
+    <section class="canvas-area" id="canvas-area" hidden>
+      <div class="panel">
+        <div class="panel-head">
+          <span>Original (pixel-perfect)</span>
+          <label class="toggle"><input type="checkbox" id="toggle-bw-only" /> Afficher seulement NB</label>
+        </div>
+        <div class="canvas-stack">
+          <canvas id="canvas-original"></canvas>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <span>Niveaux de gris + Mapping Darwin</span>
+          <span class="pill">Survole ou clique pour analyser</span>
+        </div>
+        <div class="canvas-stack" id="bw-stack">
+          <canvas id="canvas-bw"></canvas>
+          <div class="crosshair" id="crosshair"></div>
+          <div class="magnifier" id="magnifier">
+            <canvas id="mag-canvas" width="180" height="180"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+  <script src="ui.js"></script>
+</body>
+</html>

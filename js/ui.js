@@ -7,6 +7,27 @@ const {
   drawImageToCanvas,
 } = window.gradientEngine;
 
+// Loading Screen Management
+window.addEventListener('DOMContentLoaded', () => {
+  const loadingScreen = document.getElementById('loading-screen');
+
+  // Simuler un chargement minimum pour l'effet visuel
+  const minLoadTime = 1200;
+  const startTime = Date.now();
+
+  window.addEventListener('load', () => {
+    const elapsed = Date.now() - startTime;
+    const remaining = Math.max(0, minLoadTime - elapsed);
+
+    setTimeout(() => {
+      if (loadingScreen) {
+        loadingScreen.classList.add('hidden');
+        setTimeout(() => loadingScreen.remove(), 500);
+      }
+    }, remaining);
+  });
+});
+
 const fileInputPlain = document.getElementById('file-input-plain');
 const fileInputHidden = document.getElementById('file-input');
 // point d'entrée unique pour l'import
@@ -403,11 +424,11 @@ fileInput.addEventListener('change', e => {
 async function handleFile(file) {
   const MAX_SIZE = 10 * 1024 * 1024;
   const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
-  if (!ALLOWED_TYPES.includes(file.type)) { showToast('❌ Format non supporté (PNG/JPG/WebP uniquement)'); logDebug('file.type rejection'); return; }
-  if (file.size > MAX_SIZE) { showToast('❌ Fichier trop lourd (max 10 MB)'); logDebug('file.size rejection'); return; }
+  if (!ALLOWED_TYPES.includes(file.type)) { showToast('❌ Format non supporté (PNG/JPG/WebP uniquement)', 'error'); logDebug('file.type rejection'); return; }
+  if (file.size > MAX_SIZE) { showToast('❌ Fichier trop lourd (max 10 MB)', 'error'); logDebug('file.size rejection'); return; }
   try {
     logDebug(`[GRADIENT] handleFile start ${file.name} ${file.type} ${file.size}`);
-    showToast('Import en cours...');
+    showToast('Import en cours...', 'loading');
     if (statusMeta) statusMeta.textContent = `Import de ${file.name}...`;
     resetPalette();
     showProgress();
@@ -445,14 +466,14 @@ async function handleFile(file) {
     statusMeta.textContent = `Fichier : ${file.name} • ${fileSizeMB} MB • ${canvasBW.width}×${canvasBW.height}`;
     updateStatus('--', '--', '--', '--');
     updateDebugPanel();
-    showToast('✅ Image importée');
+    showToast('✅ Image importée avec succès', 'success');
     finishProgress();
     logDebug('[GRADIENT] handleFile done');
   } catch (err) {
     logDebug(`[GRADIENT] handleFile error ${err}`);
     console.error(err);
     finishProgress(true);
-    showToast(`❌ Impossible de charger cette image (${err})`);
+    showToast(`❌ Impossible de charger cette image: ${err.message || 'erreur inconnue'}`, 'error');
   }
 }
 
@@ -732,27 +753,95 @@ exportPdfBtn.addEventListener('click', async () => {
   }
 });
 
-function showToast(msg) {
-  let toast = document.getElementById(successToastId);
-  if (!toast) {
-    toast = document.createElement('div');
-    toast.id = successToastId;
-    toast.style.position = 'fixed';
-    toast.style.bottom = '24px';
-    toast.style.right = '24px';
-    toast.style.padding = '12px 16px';
-    toast.style.borderRadius = '10px';
-    toast.style.background = 'rgba(28,20,46,0.9)';
-    toast.style.border = '1px solid rgba(138,43,226,0.5)';
-    toast.style.color = '#f3efff';
-    toast.style.boxShadow = '0 12px 30px rgba(83,45,122,0.45)';
-    toast.style.zIndex = '100000';
-    document.body.appendChild(toast);
+function showToast(msg, type = 'info') {
+  // Déterminer le type depuis le message si pas spécifié
+  if (type === 'info') {
+    if (msg.includes('✅') || msg.includes('exporté') || msg.includes('succès')) type = 'success';
+    else if (msg.includes('❌') || msg.includes('Erreur') || msg.includes('Impossible')) type = 'error';
+    else if (msg.includes('⌨️')) type = 'keyboard';
+    else if (msg.includes('...') || msg.includes('cours')) type = 'loading';
   }
-  toast.textContent = msg;
-  toast.style.opacity = '1';
-  toast.style.display = 'block';
-  setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 1800);
+
+  // Icônes et couleurs selon le type
+  const config = {
+    success: { icon: '✓', bg: 'rgba(20,46,28,0.95)', border: 'rgba(34,197,94,0.6)', shadow: 'rgba(34,197,94,0.3)' },
+    error: { icon: '✕', bg: 'rgba(46,20,28,0.95)', border: 'rgba(239,68,68,0.6)', shadow: 'rgba(239,68,68,0.3)' },
+    warning: { icon: '⚠', bg: 'rgba(46,38,20,0.95)', border: 'rgba(251,146,60,0.6)', shadow: 'rgba(251,146,60,0.3)' },
+    info: { icon: 'ℹ', bg: 'rgba(20,28,46,0.95)', border: 'rgba(59,130,246,0.6)', shadow: 'rgba(59,130,246,0.3)' },
+    keyboard: { icon: '⌨', bg: 'rgba(28,20,46,0.95)', border: 'rgba(138,43,226,0.6)', shadow: 'rgba(138,43,226,0.3)' },
+    loading: { icon: '⟳', bg: 'rgba(28,28,38,0.95)', border: 'rgba(109,213,255,0.6)', shadow: 'rgba(109,213,255,0.3)' }
+  };
+
+  const style = config[type] || config.info;
+
+  const toast = document.createElement('div');
+  toast.className = 'toast-notification';
+  toast.innerHTML = `
+    <div class="toast-icon ${type}">${style.icon}</div>
+    <div class="toast-message">${msg.replace(/^[✅❌⌨️]\s*/, '')}</div>
+  `;
+
+  Object.assign(toast.style, {
+    position: 'fixed',
+    bottom: '24px',
+    right: '24px',
+    padding: '14px 18px',
+    borderRadius: '12px',
+    background: style.bg,
+    border: `1px solid ${style.border}`,
+    color: '#f3efff',
+    boxShadow: `0 12px 30px ${style.shadow}, 0 4px 12px rgba(0,0,0,0.4)`,
+    zIndex: '100000',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    fontFamily: 'Inter, system-ui, sans-serif',
+    fontSize: '14px',
+    fontWeight: '500',
+    backdropFilter: 'blur(10px)',
+    animation: 'toastSlideIn 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)',
+    maxWidth: '400px',
+    wordWrap: 'break-word'
+  });
+
+  const iconStyle = toast.querySelector('.toast-icon');
+  Object.assign(iconStyle.style, {
+    fontSize: '18px',
+    fontWeight: '700',
+    flexShrink: '0',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '24px',
+    height: '24px'
+  });
+
+  if (type === 'loading') {
+    iconStyle.style.animation = 'spin 1s linear infinite';
+  }
+
+  document.body.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.animation = 'toastSlideOut 0.3s ease forwards';
+    setTimeout(() => toast.remove(), 300);
+  }, type === 'loading' ? 3000 : 2500);
+}
+
+// Ajouter les animations CSS pour les toasts
+if (!document.getElementById('toast-animations')) {
+  const style = document.createElement('style');
+  style.id = 'toast-animations';
+  style.textContent = `
+    @keyframes toastSlideIn {
+      from { transform: translateX(400px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes toastSlideOut {
+      to { transform: translateX(400px); opacity: 0; }
+    }
+  `;
+  document.head.appendChild(style);
 }
 
 function showProgress() {

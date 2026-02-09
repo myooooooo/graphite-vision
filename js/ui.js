@@ -22,19 +22,20 @@ const toggleBwOnly = document.getElementById('toggle-bw-only');
 const togglePosterize = document.getElementById('toggle-posterize');
 const gridSlider = document.getElementById('grid-slider');
 const gridValue = document.getElementById('grid-value');
-const exportBtn = document.getElementById('export-guide');
 const exportImageBtn = document.getElementById('export-image');
 const gridColorInput = document.getElementById('grid-color');
 const gridThicknessInput = document.getElementById('grid-thickness');
 const gridThicknessValue = document.getElementById('grid-thickness-value');
 const palettePanel = document.getElementById('palette-panel');
 const paletteList = document.getElementById('palette-list');
-const exportOutput = document.getElementById('export-output');
 const progressBar = document.getElementById('progress-bar');
 const progressSpan = progressBar.querySelector('span');
 const controls = document.getElementById('controls');
 const workspace = document.getElementById('workspace');
 const successToastId = 'gradient-toast';
+const emptyImportBtn = document.getElementById('empty-import');
+const emptyState = document.getElementById('empty-state');
+const loader = document.getElementById('loader');
 
 const ctxOrig = canvasOriginal.getContext('2d');
 const ctxBW = canvasBW.getContext('2d');
@@ -49,6 +50,28 @@ let gridDivisions = 0;
 let gridColor = '#8A22BE';
 let gridThickness = 1;
 const paletteSet = new Map();
+let gridTimeout;
+let thicknessTimeout;
+let colorTimeout;
+
+// Persist palette
+function savePalette() {
+  localStorage.setItem('gradient_palette', JSON.stringify(Array.from(paletteSet.entries())));
+}
+
+function loadPalette() {
+  const saved = localStorage.getItem('gradient_palette');
+  if (!saved) return;
+  try {
+    const data = JSON.parse(saved);
+    data.forEach(([p, g]) => addToPalette(p, g, false));
+  } catch (e) {
+    console.warn('Palette restore failed', e);
+  }
+}
+
+loadPalette();
+gridThicknessValue.textContent = `${gridThickness}px`;
 
 // --- Helpers ---
 function fmtHex(gray) {
@@ -138,7 +161,7 @@ function processClick(evt) {
   addToPalette(pencil, gray);
 }
 
-function addToPalette(pencil, gray) {
+function addToPalette(pencil, gray, persist = true) {
   if (paletteSet.has(pencil)) return;
   paletteSet.set(pencil, gray);
   const li = document.createElement('li');
@@ -146,6 +169,7 @@ function addToPalette(pencil, gray) {
   li.innerHTML = `<span class="palette-swatch" style="background: rgb(${gray},${gray},${gray})"></span><span>${pencil}</span>`;
   paletteList.appendChild(li);
   palettePanel.hidden = false;
+  if (persist) savePalette();
 }
 
 function posterize5Levels(srcData) {
@@ -212,6 +236,7 @@ dropZone.addEventListener('drop', e => {
 });
 
 dropZone.addEventListener('click', () => fileInput.click());
+if (emptyImportBtn) emptyImportBtn.addEventListener('click', () => fileInput.click());
 fileInput.addEventListener('change', e => {
   const file = e.target.files[0];
   if (file) {
@@ -221,6 +246,17 @@ fileInput.addEventListener('change', e => {
 });
 
 async function handleFile(file) {
+  const MAX_SIZE = 10 * 1024 * 1024; // 10 MB
+  const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
+  if (!ALLOWED_TYPES.includes(file.type)) {
+    showToast('❌ Format non supporté (PNG/JPG/WebP uniquement)');
+    return;
+  }
+  if (file.size > MAX_SIZE) {
+    showToast('❌ Fichier trop lourd (max 10 MB)');
+    return;
+  }
+
   try {
     console.log('[ui] handleFile start', file.name);
     showProgress();
@@ -235,20 +271,23 @@ async function handleFile(file) {
     canvasArea.hidden = false;
     workspace.hidden = false;
     controls.hidden = false;
+    if (emptyState) emptyState.style.display = 'none';
     // Par défaut : vue NB uniquement
-    toggleBwOnly.checked = true;
+    toggleBwOnly.checked = false;
     canvasOriginal.parentElement.style.display = 'none';
     const toggleLabel = document.querySelector('label.toggle');
     if (toggleLabel) toggleLabel.childNodes.forEach(n => {
       if (n.nodeType === Node.TEXT_NODE) n.textContent = ' Afficher original et NB';
     });
     updateStatus('--', '--', '--', '--');
+    const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+    statusMeta.textContent = `Fichier : ${file.name} • ${fileSizeMB} MB`;
     finishProgress();
     console.log('[ui] handleFile done');
   } catch (err) {
     finishProgress(true);
     console.error('[ui] handleFile error', err);
-    alert('Impossible de charger cette image.');
+    showToast('❌ Impossible de charger cette image');
   }
 }
 
@@ -260,46 +299,38 @@ canvasBW.addEventListener('mouseleave', () => {
 });
 canvasBW.addEventListener('mouseenter', () => { magnifier.style.display = 'block'; });
 
-// Mouvement global de la loupe pour suivre le curseur même si le canvas est en position relative
-window.addEventListener('mousemove', (e) => {
-  magnifier.style.left = `${e.clientX}px`;
-  magnifier.style.top = `${e.clientY}px`;
-});
-
 toggleBwOnly.addEventListener('change', e => {
-  canvasOriginal.parentElement.style.display = e.target.checked ? 'none' : 'block';
+  canvasOriginal.parentElement.style.display = e.target.checked ? 'block' : 'none';
 });
 
 togglePosterize.addEventListener('change', e => {
   posterizeOn = e.target.checked;
-  renderBWView();
+  clearTimeout(gridTimeout);
+  gridTimeout = setTimeout(() => renderBWView(), 100);
 });
 
 gridSlider.addEventListener('input', e => {
   gridDivisions = parseInt(e.target.value, 10) || 0;
   gridValue.textContent = gridDivisions ? `${gridDivisions}x${gridDivisions}` : '0x0';
-  renderBWView();
+  clearTimeout(gridTimeout);
+  gridTimeout = setTimeout(() => renderBWView(), 100);
 });
 
 gridColorInput.addEventListener('input', e => {
   gridColor = e.target.value || '#8A22BE';
-  renderBWView();
+  clearTimeout(colorTimeout);
+  colorTimeout = setTimeout(() => renderBWView(), 100);
 });
 
 gridThicknessInput.addEventListener('input', e => {
   gridThickness = parseFloat(e.target.value) || 1;
   gridThicknessValue.textContent = `${gridThickness}px`;
-  renderBWView();
-});
-
-exportBtn.addEventListener('click', () => {
-  const pencils = Array.from(paletteSet.keys()).sort((a, b) => DARWIN_PENCILS.indexOf(a) - DARWIN_PENCILS.indexOf(b));
-  exportOutput.textContent = pencils.length ? `Crayons nécessaires : ${pencils.join(', ')}` : 'Aucun crayon détecté pour l’instant.';
-  console.log('Guide de dessin - crayons :', pencils);
+  clearTimeout(thicknessTimeout);
+  thicknessTimeout = setTimeout(() => renderBWView(), 100);
 });
 
 exportImageBtn.addEventListener('click', async () => {
-  if (!graySnapshot) { alert('Charge une image avant d’exporter.'); return; }
+  if (!graySnapshot) { showToast('❌ Charge une image avant d’exporter.'); return; }
   const usedPencils = Array.from(paletteSet.entries()); // [pencil, gray]
   if (!usedPencils.length) { showToast('Clique sur l’image pour échantillonner avant export.'); return; }
 
@@ -376,7 +407,7 @@ exportImageBtn.addEventListener('click', async () => {
     a.click();
     URL.revokeObjectURL(a.href);
     showToast('Fiche générée !');
-  }, 'image/png', 1.0);
+  }, 'image/png');
 });
 
 function showToast(msg) {
@@ -399,10 +430,11 @@ function showToast(msg) {
   toast.textContent = msg;
   toast.style.opacity = '1';
   toast.style.display = 'block';
-  setTimeout(() => { toast.style.opacity = '0'; toast.style.display = 'none'; }, 1800);
+  setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 1800);
 }
 
 function showProgress() {
+  if (loader) loader.style.display = 'block';
   progressBar.style.display = 'block';
   progressSpan.style.width = '0%';
   requestAnimationFrame(() => {
@@ -413,4 +445,5 @@ function showProgress() {
 function finishProgress(error = false) {
   progressSpan.style.width = error ? '0%' : '100%';
   setTimeout(() => { progressBar.style.display = 'none'; }, 350);
+  if (loader) loader.style.display = 'none';
 }

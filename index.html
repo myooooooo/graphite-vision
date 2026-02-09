@@ -50,11 +50,17 @@
           <input type="range" id="grid-thickness" min="0.5" max="3" step="0.1" value="1" />
           <span id="grid-thickness-value">1px</span>
         </label>
+        <div class="loader" id="loader"></div>
         <div class="progress" id="progress-bar"><span></span></div>
       </div>
     </aside>
 
     <section class="main-area viewport">
+      <div class="empty-state" id="empty-state">
+        <div class="empty-title">Glisse-dépose une image ou clique sur "Importer une image".</div>
+        <div class="empty-hint">Formats : JPG, PNG, WebP • Rendu pixel-perfect et mapping 24 crayons.</div>
+        <button class="btn neon" id="empty-import">Importer</button>
+      </div>
       <div class="panel glass switcher" id="canvas-area" hidden>
         <div class="panel-head">
           <span>Avant / Après</span>
@@ -83,9 +89,7 @@
       <div class="panel-section actions">
         <div class="section-title">Actions</div>
         <div class="actions-bottom">
-          <button id="export-guide" class="btn ghost secondary">Exporter le guide de dessin</button>
           <button id="export-image" class="btn neon">Exporter ma Fiche de Travail</button>
-          <div class="export-output" id="export-output">Clique pour générer le guide.</div>
         </div>
       </div>
     </aside>

@@ -22,7 +22,12 @@
         <div class="subtitle">Digital Graphite Intelligence</div>
       </div>
     </div>
-    <div class="nav-actions"><div class="swatch" id="status-swatch"></div></div>
+    <div class="nav-actions">
+      <div class="swatch" id="status-swatch"></div>
+      <button id="help-btn" class="btn-help" aria-label="Aide et raccourcis clavier" title="Raccourcis clavier (?)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.6"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3m.08 4h.01" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
   </header>
 
   <div class="status-badge glass" id="status-bar" hidden>
@@ -104,6 +109,11 @@
           </select>
           <span class="control-hint">Charge des réglages grille/nuances en un clic.</span>
         </label>
+        <button id="reset-settings" class="btn btn-tertiary">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M13.65 2.35A7.95 7.95 0 1 0 14 8m-6-6v4m0 0L6 4m2 2 2-2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Réinitialiser les réglages
+          <span class="shortcut">R</span>
+        </button>
 
         <div class="loader" id="loader"></div>
         <div class="progress" id="progress-bar"><span></span></div>
@@ -154,8 +164,14 @@
       <div class="panel-section actions">
         <div class="section-title">Actions</div>
         <div class="actions-bottom">
-          <button id="export-image" class="btn btn-primary">Exporter ma Fiche de Travail</button>
-          
+          <button id="export-image" class="btn btn-primary">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2v8m0 0l-3-3m3 3l3-3M3 14h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Exporter PNG
+          </button>
+          <button id="export-pdf" class="btn btn-secondary">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 14h8M4 10h8M4 6h6M8 2v6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            Exporter PDF
+          </button>
         </div>
       </div>
     </aside>
@@ -163,6 +179,7 @@
   </div>
 
   <!-- Charge le moteur avant l'UI pour garantir l'accès aux fonctions globales -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="js/core.js"></script>
   <script src="js/ui.js"></script>
 </body>

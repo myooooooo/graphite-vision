@@ -20,6 +20,11 @@ const statusMeta = document.getElementById('status-meta');
 const statusSwatch = document.getElementById('status-swatch');
 const statusBar = document.getElementById('status-bar');
 const exportImageBtn = document.getElementById('export-image');
+const statusGray = document.getElementById('status-gray');
+const statusHex = document.getElementById('status-hex');
+const statusX = document.getElementById('status-x');
+const statusY = document.getElementById('status-y');
+const copyHexBtn = document.getElementById('copy-hex');
 const toggleBwOnly = document.getElementById('toggle-bw-only');
 const togglePosterize = document.getElementById('toggle-posterize');
 const gridSlider = document.getElementById('grid-slider');
@@ -68,6 +73,14 @@ function openFileDialog() {
   fileInput.click();
 }
 
+if (copyHexBtn) {
+  copyHexBtn.addEventListener('click', () => {
+    if (!statusHex) return;
+    navigator.clipboard?.writeText(statusHex.textContent || '');
+    showToast('Valeur hex copiée');
+  });
+}
+
 function savePalette() { try { localStorage.setItem('gradient_palette', JSON.stringify(Array.from(paletteSet.entries()))); } catch (_) {} }
 function resetPalette(clearStorage = true) {
   paletteSet.clear();
@@ -84,7 +97,10 @@ const fmtHex = (gray) => { const v = gray.toString(16).padStart(2,'0'); return `
 
 function updateStatus(gray, pencil, x, y) {
   statusPencil.textContent = `Crayon : ${pencil}`;
-  statusMeta.textContent = `Valeur : ${gray} • Hex : ${fmtHex(gray)} • X:${x} Y:${y}`;
+  if (statusGray) statusGray.textContent = gray;
+  if (statusHex) statusHex.textContent = fmtHex(gray);
+  if (statusX) statusX.textContent = x;
+  if (statusY) statusY.textContent = y;
   statusSwatch.style.background = `rgb(${gray},${gray},${gray})`;
 }
 

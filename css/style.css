@@ -71,7 +71,10 @@ a { color: var(--accent); text-decoration: none; }
   margin-bottom: 20px;
 }
 .status-main { font-weight: 700; letter-spacing: 0.08em; }
-.status-sub { font-size: 12px; color: var(--muted); user-select: text; cursor: text; }
+.status-sub { font-size: 12px; color: var(--muted); user-select: text; cursor: text; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.hex-value { font-weight: 700; color: var(--text); }
+.btn-copy { background: rgba(255,255,255,0.08); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 4px 6px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.btn-copy:hover { background: rgba(255,255,255,0.15); }
 
 .app-grid {
   display: grid;
@@ -249,4 +252,11 @@ canvas {
   .topbar { grid-template-columns: 1fr; height: auto; }
   .nav-actions { justify-content: flex-start; }
   .status-badge { flex-wrap: wrap; }
+}
+.btn-copy:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }

@@ -1,0 +1,205 @@
+Last login: Mon Feb  9 11:12:01 on ttys004
+zineb@Mac-mini-de-zineb ~ % cd Documents 
+zineb@Mac-mini-de-zineb Documents % cd New 
+4f31758e41391c096960407280c6d3d1.jpg
+AC\ Footage/
+Adobe/
+Enregistrement\ de\ l’écran\ 2026-01-10\ à\ 14.59.25.mov
+Enregistrement\ de\ l’écran\ 2026-01-12\ à\ 18.42.08.mov
+akk\ .psd
+anim.aep
+anim.aep_AME/
+ANSSAFOU_Zineb/
+ANSSAFOU_Zineb_DP/
+ANSSAFOU_Zineb_DP\ 2/
+Area.mp4
+b6e425ba36f21caa1cb4aab5583c5f9f.png
+beaaux/
+blackout.pdf
+Brets\ \&\ Match\ -\ Campagne\ de\ Communication\ Numérique.key
+BRITEYYY/
+Code\ JS\ ANSSAFOU\ Zineb/
+Code\ JS\ ANSSAFOU\ Zineb.zip
+code\ sim/
+codes/
+Codex.dmg
+cowork/
+dataviz/
+dataviz\ deux.aep
+dataviz\ video.aep
+dataviz\ video.aep_AME/
+dataviz.aep
+dataviz.key
+dataviz.png
+datavizz\ \(0-01-35-18\).psd
+datavizz.mp4*
+datavizzz.key
+datavizzz.mov
+DESSIN.png
+DESSIN.psd
+Dessins\ ref/
+desssss/
+dix\ sept\ dec/
+DOSSIER_A_OUVRIR.pdf
+DOSSIER_PDF_FINAL.pdf
+dossier\ mac/
+DressUp/
+Enregistrement\ automatique\ Adobe\ After\ Effects/
+ffsfsdfsdfs.png
+Graph.png
+habits\ a\ mettre.psd
+HandBrake-1.10.2.dmg*
+heaven\ on\ earth.png
+IMG_0933-Récupéré.psd
+img1.png
+iut/
+jupe/
+Lien\ de\ la\ video\ YouTube/
+LISEZ-MOI.txt
+logo\ Polytech\ site\ Le\ Creusot\ transparent.png
+Maxon/
+mes\ habits/
+MoBar/
+MSP\ a.png
+MSPDL/
+New\ project/
+New\ project\ copie/
+ordi-Récupéré.psd
+pancarte.psd
+photos/
+plotly\ deux.mp4
+plotly\ sae303/
+plotly\ video.mp4
+Projet\ fil\ rouge.pdf
+Rapport\ de\ questionnaire.pdf
+Red\ Giant/
+Roblox/
+Screen\ Studio\ Background\ Audio/
+Screen\ Studio\ Presets/
+sprites/
+test.mp4*
+umut.png
+VIdeos\ Comp.\ liée\ 07-Récupéré.psd
+wardrome\ msp/
+zineb@Mac-mini-de-zineb Documents % cd New project
+cd: string not in pwd: New
+zineb@Mac-mini-de-zineb Documents % ls   
+4f31758e41391c096960407280c6d3d1.jpg
+AC Footage
+Adobe
+akk .psd
+anim.aep
+anim.aep_AME
+ANSSAFOU_Zineb
+ANSSAFOU_Zineb_DP
+ANSSAFOU_Zineb_DP 2
+Area.mp4
+b6e425ba36f21caa1cb4aab5583c5f9f.png
+beaaux
+blackout.pdf
+Brets & Match - Campagne de Communication Numérique.key
+BRITEYYY
+Code JS ANSSAFOU Zineb
+Code JS ANSSAFOU Zineb.zip
+code sim
+codes
+Codex.dmg
+cowork
+dataviz
+dataviz deux.aep
+dataviz video.aep
+dataviz video.aep_AME
+dataviz.aep
+dataviz.key
+dataviz.png
+datavizz (0-01-35-18).psd
+datavizz.mp4
+datavizzz.key
+datavizzz.mov
+DESSIN.png
+DESSIN.psd
+Dessins ref
+desssss
+dix sept dec
+dossier mac
+DOSSIER_A_OUVRIR.pdf
+DOSSIER_PDF_FINAL.pdf
+DressUp
+Enregistrement automatique Adobe After Effects
+Enregistrement de l’écran 2026-01-10 à 14.59.25.mov
+Enregistrement de l’écran 2026-01-12 à 18.42.08.mov
+ffsfsdfsdfs.png
+Graph.png
+habits a mettre.psd
+HandBrake-1.10.2.dmg
+heaven on earth.png
+IMG_0933-Récupéré.psd
+img1.png
+iut
+jupe
+Lien de la video YouTube
+LISEZ-MOI.txt
+logo Polytech site Le Creusot transparent.png
+Maxon
+mes habits
+MoBar
+MSP a.png
+MSPDL
+New project
+New project copie
+ordi-Récupéré.psd
+pancarte.psd
+photos
+plotly deux.mp4
+plotly sae303
+plotly video.mp4
+Projet fil rouge.pdf
+Rapport de questionnaire.pdf
+Red Giant
+Roblox
+Screen Studio Background Audio
+Screen Studio Presets
+sprites
+test.mp4
+umut.png
+VIdeos Comp. liée 07-Récupéré.psd
+wardrome msp
+zineb@Mac-mini-de-zineb Documents % cd New project
+cd: string not in pwd: New
+zineb@Mac-mini-de-zineb Documents % cd New\ project
+zineb@Mac-mini-de-zineb New project % ls
+css			js			package-lock.json	README.md		tsconfig.json
+index.html		node_modules		package.json		src			vite.config.ts
+zineb@Mac-mini-de-zineb New project % touch .claudeignore
+zineb@Mac-mini-de-zineb New project % nano .claudeignore 
+
+  UW PICO 5.09                                      File: .claudeignore                                       Modified  
+
+# Le "poids lourd" qui sature tes 22€
+node_modules/
+package-lock.json
+
+# Les dossiers de travail de Claude (ce que tu as vu dans tes paramètres)
+.claude-worktrees/
+.claude/
+
+# Dossiers Git et Build (inutile pour coder)
+.git/
+dist/
+
+# Fichiers système Mac
+.DS_Store 
+    
+
+
+
+
+
+
+
+
+
+
+
+^G Get Help         ^O WriteOut         ^R Read File        ^Y Prev Pg          ^K Cut Text         ^C Cur Pos          
+^X Exit             ^J Justify          ^W Where is         ^V Next Pg          ^U UnCut Text       ^T To Spell        

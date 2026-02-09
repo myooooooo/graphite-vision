@@ -27,7 +27,14 @@
 
   <div class="status-badge glass" id="status-bar" hidden>
     <span class="status-main" id="status-pencil">Survole l'image pour identifier les crayons</span>
-    <span class="status-sub" id="status-meta">Charge une image pour afficher les valeurs.</span>
+    <span class="status-sub" id="status-meta">
+      Valeur : <span id="status-gray">--</span> • Hex :
+      <span class="hex-value" id="status-hex">--</span>
+      <button type="button" class="btn-copy" id="copy-hex" aria-label="Copier la valeur hex">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M6 3h7v10H6z" stroke="currentColor" stroke-width="1.2"/><path d="M10 13H3V3h1.5" stroke="currentColor" stroke-width="1.2"/></svg>
+      </button>
+      • X:<span id="status-x">--</span> Y:<span id="status-y">--</span>
+    </span>
   </div>
 
   <main class="app-grid">

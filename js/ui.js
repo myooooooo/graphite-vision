@@ -1,4 +1,4 @@
-// GRADIENT UI - version unifiée (window.gradientEngine)
+// GRADIENT UI - global, sans bundler
 const {
   DARWIN_PENCILS,
   calculatePencilGrade,
@@ -18,6 +18,8 @@ const magCanvas = document.getElementById('mag-canvas');
 const statusPencil = document.getElementById('status-pencil');
 const statusMeta = document.getElementById('status-meta');
 const statusSwatch = document.getElementById('status-swatch');
+const statusBar = document.getElementById('status-bar');
+const exportImageBtn = document.getElementById('export-image');
 const toggleBwOnly = document.getElementById('toggle-bw-only');
 const togglePosterize = document.getElementById('toggle-posterize');
 const gridSlider = document.getElementById('grid-slider');
@@ -25,6 +27,8 @@ const gridValue = document.getElementById('grid-value');
 const gridColorInput = document.getElementById('grid-color');
 const gridThicknessInput = document.getElementById('grid-thickness');
 const gridThicknessValue = document.getElementById('grid-thickness-value');
+const zoomSlider = document.getElementById('zoom-slider');
+const zoomValue = document.getElementById('zoom-value');
 const palettePanel = document.getElementById('palette-panel');
 const paletteList = document.getElementById('palette-list');
 const progressBar = document.getElementById('progress-bar');
@@ -35,6 +39,7 @@ const successToastId = 'gradient-toast';
 const emptyImportBtn = document.getElementById('empty-import');
 const emptyState = document.getElementById('empty-state');
 const loader = document.getElementById('loader');
+const exampleGrid = document.querySelector('.example-grid');
 
 const ctxOrig = canvasOriginal.getContext('2d');
 const ctxBW = canvasBW.getContext('2d');
@@ -48,24 +53,26 @@ let posterizeOn = false;
 let gridDivisions = 0;
 let gridColor = '#8A22BE';
 let gridThickness = 1;
+let zoomLevel = 4;
 const paletteSet = new Map();
 let gridTimeout;
 let thicknessTimeout;
 let colorTimeout;
+let lastHover = null;
 
-function savePalette() {
-  try { localStorage.setItem('gradient_palette', JSON.stringify(Array.from(paletteSet.entries()))); } catch (_) {}
+function savePalette() { try { localStorage.setItem('gradient_palette', JSON.stringify(Array.from(paletteSet.entries()))); } catch (_) {} }
+function resetPalette(clearStorage = true) {
+  paletteSet.clear();
+  if (paletteList) paletteList.innerHTML = '';
+  palettePanel.hidden = true;
+  if (clearStorage) try { localStorage.removeItem('gradient_palette'); } catch (_) {}
 }
-function loadPalette() {
-  try {
-    const saved = localStorage.getItem('gradient_palette');
-    if (saved) JSON.parse(saved).forEach(([p, g]) => addToPalette(p, g, false));
-  } catch (_) {}
-}
-loadPalette();
+resetPalette(false); // démarrage sans pré-remplissage
 gridThicknessValue.textContent = `${gridThickness}px`;
+if (zoomValue) zoomValue.textContent = `${zoomLevel.toFixed(1)}×`;
+if (statusBar) statusBar.hidden = true;
 
-function fmtHex(gray) { const v = gray.toString(16).padStart(2, '0'); return `#${v}${v}${v}`; }
+const fmtHex = (gray) => { const v = gray.toString(16).padStart(2,'0'); return `#${v}${v}${v}`; };
 
 function updateStatus(gray, pencil, x, y) {
   statusPencil.textContent = `Crayon : ${pencil}`;
@@ -91,7 +98,7 @@ function renderMagnifier(clientX, clientY, sourceX, sourceY, zoom = 4, pencil = 
   ctxMag.save();
   ctxMag.clearRect(0, 0, size, size);
   ctxMag.beginPath(); ctxMag.arc(half, half, half - 2, 0, Math.PI * 2); ctxMag.clip();
-  ctxMag.drawImage(canvasBW, sourceX - size / (2 * zoom), sourceY - size / (2 * zoom), size / zoom, size / zoom, 0, 0, size, size);
+  ctxMag.drawImage(canvasBW, sourceX - size/(2*zoom), sourceY - size/(2*zoom), size/zoom, size/zoom, 0, 0, size, size);
   ctxMag.strokeStyle = '#bf40bf'; ctxMag.lineWidth = 1;
   ctxMag.beginPath(); ctxMag.moveTo(half, 0); ctxMag.lineTo(half, size); ctxMag.moveTo(0, half); ctxMag.lineTo(size, half); ctxMag.stroke();
   ctxMag.restore();
@@ -102,12 +109,23 @@ function renderMagnifier(clientX, clientY, sourceX, sourceY, zoom = 4, pencil = 
 function addToPalette(pencil, gray, persist = true) {
   if (paletteSet.has(pencil)) return;
   paletteSet.set(pencil, gray);
-  const li = document.createElement('li');
-  li.className = 'palette-item';
-  li.innerHTML = `<span class="palette-swatch" style="background: rgb(${gray},${gray},${gray})"></span><span>${pencil}</span>`;
-  paletteList.appendChild(li);
+  refreshPaletteList();
   palettePanel.hidden = false;
   if (persist) savePalette();
+}
+
+function refreshPaletteList() {
+  if (!paletteList) return;
+  paletteList.innerHTML = '';
+  const sorted = Array.from(paletteSet.entries()).sort((a, b) => a[1] - b[1]); // clair -> sombre
+  sorted.forEach(([pencil, gray]) => {
+    const li = document.createElement('li');
+    li.className = 'palette-item';
+    li.dataset.pencil = pencil;
+    li.title = `${pencil} — nuance recommandée`;
+    li.innerHTML = `<span class="palette-swatch" style="background: rgb(${gray},${gray},${gray})"></span><span class="palette-grade">${pencil}</span>`;
+    paletteList.appendChild(li);
+  });
 }
 
 function posterize5Levels(srcData) {
@@ -156,13 +174,28 @@ function renderBWView() {
   if (gridDivisions > 0) drawGrid(gridDivisions);
 }
 
-['dragenter','dragover'].forEach(evt => dropZone.addEventListener(evt, e => {e.preventDefault(); dropZone.classList.add('dragging');}));
-['dragleave','drop'].forEach(evt => dropZone.addEventListener(evt, e => {e.preventDefault(); dropZone.classList.remove('dragging');}));
-
-dropZone.addEventListener('drop', e => { const file = e.dataTransfer.files[0]; if (file) handleFile(file); });
-dropZone.addEventListener('click', () => fileInput.click());
+if (dropZone) {
+  ['dragenter','dragover'].forEach(evt => dropZone.addEventListener(evt, e => {e.preventDefault(); dropZone.classList.add('dragging');}));
+  ['dragleave','drop'].forEach(evt => dropZone.addEventListener(evt, e => {e.preventDefault(); dropZone.classList.remove('dragging');}));
+  dropZone.addEventListener('drop', e => { const file = e.dataTransfer.files[0]; if (file) handleFile(file); });
+  dropZone.addEventListener('click', () => {
+    fileInput.value = '';
+    fileInput.click();
+  });
+}
 if (emptyImportBtn) emptyImportBtn.addEventListener('click', () => fileInput.click());
-fileInput.addEventListener('change', e => { const file = e.target.files[0]; if (file) handleFile(file); });
+if (exampleGrid) {
+  exampleGrid.addEventListener('click', (e) => {
+    const card = e.target.closest('.example-thumb');
+    if (!card) return;
+    showToast('Exemples offline non disponibles. Importez votre image.');
+  });
+}
+fileInput.addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (file) handleFile(file);
+  e.target.value = '';
+});
 
 async function handleFile(file) {
   const MAX_SIZE = 10 * 1024 * 1024;
@@ -170,6 +203,7 @@ async function handleFile(file) {
   if (!ALLOWED_TYPES.includes(file.type)) { showToast('❌ Format non supporté (PNG/JPG/WebP uniquement)'); return; }
   if (file.size > MAX_SIZE) { showToast('❌ Fichier trop lourd (max 10 MB)'); return; }
   try {
+    resetPalette();
     showProgress();
     const img = await loadImageFile(file);
     drawImageToCanvas(img, canvasOriginal, ctxOrig);
@@ -181,7 +215,8 @@ async function handleFile(file) {
     workspace.hidden = false;
     controls.hidden = false;
     if (emptyState) emptyState.style.display = 'none';
-    toggleBwOnly.checked = false; // NB par défaut, afficher original si coché
+    if (statusBar) statusBar.hidden = false;
+    toggleBwOnly.checked = false; // NB par défaut
     canvasOriginal.parentElement.style.display = 'none';
     const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
     statusMeta.textContent = `Fichier : ${file.name} • ${fileSizeMB} MB`;
@@ -206,7 +241,12 @@ function processHover(evt) {
   const pencil = calculatePencilGrade(gray);
   updateStatus(gray, pencil, x, y);
   setCrosshair(evt.clientX, evt.clientY);
-  renderMagnifier(evt.clientX, evt.clientY, x, y, 4, pencil, gray);
+  renderMagnifier(evt.clientX, evt.clientY, x, y, zoomLevel, pencil, gray);
+  lastHover = { clientX: evt.clientX, clientY: evt.clientY, x, y, pencil, gray };
+  // surligner le crayon correspondant dans la palette
+  document.querySelectorAll('.palette-item').forEach(item => {
+    item.classList.toggle('active', item.dataset.pencil === pencil);
+  });
 }
 
 function processClick(evt) {
@@ -225,7 +265,7 @@ function processClick(evt) {
 
 canvasBW.addEventListener('mousemove', processHover);
 canvasBW.addEventListener('click', processClick);
-canvasBW.addEventListener('mouseleave', () => { crosshair.style.display = 'none'; magnifier.style.display = 'none'; });
+canvasBW.addEventListener('mouseleave', () => { crosshair.style.display = 'none'; magnifier.style.display = 'none'; lastHover = null; });
 canvasBW.addEventListener('mouseenter', () => { magnifier.style.display = 'block'; });
 
 toggleBwOnly.addEventListener('change', e => {
@@ -240,7 +280,7 @@ togglePosterize.addEventListener('change', e => {
 
 gridSlider.addEventListener('input', e => {
   gridDivisions = parseInt(e.target.value, 10) || 0;
-  gridValue.textContent = gridDivisions ? `${gridDivisions}x${gridDivisions}` : '0x0';
+  gridValue.textContent = gridDivisions ? `${gridDivisions}×${gridDivisions}` : 'Désactivée';
   clearTimeout(gridTimeout);
   gridTimeout = setTimeout(() => renderBWView(), 100);
 });
@@ -256,6 +296,92 @@ gridThicknessInput.addEventListener('input', e => {
   gridThicknessValue.textContent = `${gridThickness}px`;
   clearTimeout(thicknessTimeout);
   thicknessTimeout = setTimeout(() => renderBWView(), 100);
+});
+
+if (zoomSlider) {
+  zoomSlider.addEventListener('input', e => {
+    zoomLevel = parseFloat(e.target.value) || 4;
+    if (zoomValue) zoomValue.textContent = `${zoomLevel.toFixed(1)}×`;
+    // Prévisualisation immédiate : si un point est déjà survolé, on rafraîchit la loupe.
+    // Sinon, on prend le centre de l'image comme aperçu si elle est chargée.
+    if (!lastHover && graySnapshot) {
+      const rect = canvasBW.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const scaleX = canvasBW.width / rect.width;
+      const scaleY = canvasBW.height / rect.height;
+      const x = Math.floor((cx - rect.left) * scaleX);
+      const y = Math.floor((cy - rect.top) * scaleY);
+      const idx = (y * canvasBW.width + x) * 4;
+      const gray = graySnapshot.data[idx];
+      const pencil = calculatePencilGrade(gray);
+      lastHover = { clientX: cx, clientY: cy, x, y, pencil, gray };
+    }
+    if (lastHover) {
+      magnifier.style.display = 'block';
+      renderMagnifier(lastHover.clientX, lastHover.clientY, lastHover.x, lastHover.y, zoomLevel, lastHover.pencil, lastHover.gray);
+    }
+  });
+}
+
+exportImageBtn.addEventListener('click', async () => {
+  if (!graySnapshot) { showToast('❌ Charge une image avant d’exporter.'); return; }
+  const usedPencils = Array.from(paletteSet.entries());
+  if (!usedPencils.length) { showToast('Clique sur l’image pour échantillonner avant export.'); return; }
+  const w = canvasBW.width;
+  const h = canvasBW.height;
+  const legendWidth = 180;
+  const legendHeight = 40 + usedPencils.length * 24;
+  const exportHeight = Math.max(h, legendHeight);
+  const out = document.createElement('canvas');
+  out.width = w + legendWidth + 20;
+  out.height = exportHeight;
+  const octx = out.getContext('2d');
+  octx.imageSmoothingEnabled = false;
+  const dataToDraw = posterizeOn ? posterize5Levels(graySnapshot) : graySnapshot;
+  octx.putImageData(dataToDraw, 0, 0);
+  if (gridDivisions > 0) {
+    octx.save();
+    octx.strokeStyle = gridColor;
+    octx.lineWidth = gridThickness;
+    octx.font = '12px Inter, sans-serif';
+    octx.fillStyle = 'rgba(243,239,255,0.85)';
+    const stepX = w / gridDivisions;
+    const stepY = h / gridDivisions;
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    for (let i = 1; i < gridDivisions; i++) { const x = stepX * i; octx.beginPath(); octx.moveTo(x,0); octx.lineTo(x,h); octx.stroke(); octx.fillText(String(i+1), x+4, 14); }
+    for (let j = 1; j < gridDivisions; j++) { const y = stepY * j; octx.beginPath(); octx.moveTo(0,y); octx.lineTo(w,y); octx.stroke(); octx.fillText(letters[j] || j+1, 6, y-4); }
+    octx.restore();
+  }
+  const legendX = w + 10;
+  octx.save();
+  octx.fillStyle = 'rgba(20,15,34,0.9)';
+  octx.fillRect(w, 0, legendWidth, exportHeight);
+  octx.strokeStyle = 'rgba(147,112,219,0.35)';
+  octx.strokeRect(w + 0.5, 0.5, legendWidth - 1, exportHeight - 1);
+  octx.font = '14px Inter, sans-serif';
+  octx.fillStyle = '#f3efff';
+  octx.fillText('Crayons utilisés', legendX, 24);
+  usedPencils.sort((a,b)=>DARWIN_PENCILS.indexOf(a[0])-DARWIN_PENCILS.indexOf(b[0]))
+    .forEach(([p,g], idx)=>{
+      const y = 50 + idx * 24;
+      const gray = g ?? Math.round((DARWIN_PENCILS.indexOf(p)/(DARWIN_PENCILS.length-1))*255);
+      octx.fillStyle = `rgb(${gray},${gray},${gray})`;
+      octx.fillRect(legendX, y-12, 24, 16);
+      octx.strokeStyle = 'rgba(147,112,219,0.4)';
+      octx.strokeRect(legendX, y-12, 24, 16);
+      octx.fillStyle = '#f3efff';
+      octx.fillText(p, legendX + 34, y + 2);
+    });
+  octx.restore();
+  out.toBlob((blob) => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'gradient-fiche.png';
+    a.click();
+    URL.revokeObjectURL(a.href);
+    showToast('Fiche générée !');
+  }, 'image/png');
 });
 
 function showToast(msg) {

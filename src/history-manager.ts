@@ -1,7 +1,9 @@
 export class HistoryManager<T> {
   private past: T[] = [];
   private future: T[] = [];
-  private maxSteps = 20;
+  private maxSteps: number;
+
+  constructor(maxSteps = 20) { this.maxSteps = maxSteps; }
 
   push(state: T) {
     this.past.push(structuredClone(state));
@@ -23,8 +25,5 @@ export class HistoryManager<T> {
     return next;
   }
 
-  clear() {
-    this.past = [];
-    this.future = [];
-  }
+  clear() { this.past = []; this.future = []; }
 }

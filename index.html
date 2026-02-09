@@ -13,6 +13,7 @@
     <div class="magnifier-value" id="magnifier-value">--</div>
   </div>
 
+  <div class="shell">
   <header class="topbar glass">
     <div class="brand">
       <div class="logo-dot"></div>
@@ -21,14 +22,12 @@
         <div class="subtitle">Digital Graphite Intelligence</div>
       </div>
     </div>
-    <div class="nav-actions">
-      <div class="swatch" id="status-swatch"></div>
-    </div>
+    <div class="nav-actions"><div class="swatch" id="status-swatch"></div></div>
   </header>
 
-  <div class="status-badge glass" id="status-bar">
-    <span class="status-main" id="status-pencil">Crayon : --</span>
-    <span class="status-sub" id="status-meta">Valeur : -- • Hex : -- • X:-- Y:--</span>
+  <div class="status-badge glass" id="status-bar" hidden>
+    <span class="status-main" id="status-pencil">Survole l'image pour identifier les crayons</span>
+    <span class="status-sub" id="status-meta">Charge une image pour afficher les valeurs.</span>
   </div>
 
   <main class="app-grid">
@@ -37,19 +36,54 @@
       <input type="file" id="file-input" accept="image/*" hidden />
       <button class="btn neon import-btn" id="drop-zone">Importer une image</button>
       <div class="panel-section" id="controls">
-        <div class="section-title">Réglages</div>
-        <label class="pill toggle"><input type="checkbox" id="toggle-posterize" /> Simplifier les masses</label>
-        <label class="pill toggle">Grille
-          <input type="range" id="grid-slider" min="0" max="10" step="1" value="0" />
-          <span id="grid-value">0x0</span>
+        <h3 class="section-title">Import</h3>
+        <button class="btn btn-primary" id="drop-zone" aria-label="Importer une image (JPG, PNG, WebP)"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2v8m0 0l-3-3m3 3l3-3M3 14h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Importer une image</button>
+
+        <h3 class="section-title">Simplification</h3>
+        <label class="control-item toggle-control">
+          <div class="control-header">
+            <span class="control-label">Réduire les nuances</span>
+            <div class="toggle-switch">
+              <input type="checkbox" id="toggle-posterize" aria-label="Réduire les nuances de gris" />
+              <span class="toggle-slider"></span>
+            </div>
+          </div>
+          <span class="control-hint">Regroupe les gris proches en 5 masses tonales.</span>
         </label>
-        <label class="pill toggle">Couleur Grille
-          <input type="color" id="grid-color" value="#8A22BE" />
+
+        <h3 class="section-title">Grille de référence</h3>
+        <label class="control-item">
+          <div class="control-header">
+            <span class="control-label">Grille</span>
+            <span class="control-value" id="grid-value">Désactivée</span>
+          </div>
+          <input type="range" id="grid-slider" min="0" max="10" step="1" value="0" aria-label="Division de grille" />
+          <span class="control-hint">Divise l'image en carrés numérotés.</span>
         </label>
-        <label class="pill toggle">Épaisseur Grille
-          <input type="range" id="grid-thickness" min="0.5" max="3" step="0.1" value="1" />
-          <span id="grid-thickness-value">1px</span>
+        <label class="control-item">
+          <div class="control-header">
+            <span class="control-label">Couleur de grille</span>
+          </div>
+          <input type="color" id="grid-color" value="#8A22BE" aria-label="Couleur de la grille" />
         </label>
+        <label class="control-item">
+          <div class="control-header">
+            <span class="control-label">Épaisseur</span>
+            <span class="control-value" id="grid-thickness-value">1px</span>
+          </div>
+          <input type="range" id="grid-thickness" min="0.5" max="3" step="0.1" value="1" aria-label="Épaisseur de la grille" />
+        </label>
+
+        <h3 class="section-title">Outils</h3>
+        <label class="control-item">
+          <div class="control-header">
+            <span class="control-label">Zoom loupe</span>
+            <span class="control-value" id="zoom-value">4×</span>
+          </div>
+          <input type="range" id="zoom-slider" min="2" max="12" step="0.5" value="4" aria-label="Zoom de la loupe" />
+          <span class="control-hint">Ajuste la précision de l'échantillonnage pixel.</span>
+        </label>
+
         <div class="loader" id="loader"></div>
         <div class="progress" id="progress-bar"><span></span></div>
       </div>
@@ -57,9 +91,19 @@
 
     <section class="main-area viewport">
       <div class="empty-state" id="empty-state">
-        <div class="empty-title">Glisse-dépose une image ou clique sur "Importer une image".</div>
-        <div class="empty-hint">Formats : JPG, PNG, WebP • Rendu pixel-perfect et mapping 24 crayons.</div>
-        <button class="btn neon" id="empty-import">Importer</button>
+        <svg class="empty-icon" width="80" height="80" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 15v3a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <h2 class="empty-title">Glisse ton image ici</h2>
+        <p class="empty-hint">JPG, PNG, WebP • Jusqu'à 10 Mo • Rendu pixel-perfect</p>
+        <button class="btn btn-primary" id="empty-import">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2v8m0 0l-3-3m3 3l3-3M3 14h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Choisir une image
+        </button>
+        <div class="empty-divider"></div>
+        <div class="example-grid">
+          <div class="example-thumb" data-example="sample1"><img src="https://dummyimage.com/200x120/111/999&text=Portrait" alt="Exemple Portrait"><span>Portrait</span></div>
+          <div class="example-thumb" data-example="sample2"><img src="https://dummyimage.com/200x120/111/999&text=Architecture" alt="Exemple Architecture"><span>Architecture</span></div>
+          <div class="example-thumb" data-example="sample3"><img src="https://dummyimage.com/200x120/111/999&text=Nature" alt="Exemple Nature"><span>Nature</span></div>
+        </div>
       </div>
       <div class="panel glass switcher" id="canvas-area" hidden>
         <div class="panel-head">
@@ -94,6 +138,7 @@
       </div>
     </aside>
   </main>
+  </div>
 
   <!-- Charge le moteur avant l'UI pour garantir l'accès aux fonctions globales -->
   <script src="js/core.js"></script>

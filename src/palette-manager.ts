@@ -8,14 +8,16 @@ export class PaletteManager {
   }
 
   add(pencil: string, grayValue: number) {
-    if (this.data.has(pencil)) return;
+    if (this.data.has(pencil)) return false;
     this.data.set(pencil, grayValue);
     this.save();
+    return true;
   }
 
   remove(pencil: string) {
-    this.data.delete(pencil);
+    const res = this.data.delete(pencil);
     this.save();
+    return res;
   }
 
   clear() {
@@ -26,17 +28,14 @@ export class PaletteManager {
   save() {
     try {
       localStorage.setItem(this.storageKey, JSON.stringify(Array.from(this.data.entries())));
-    } catch (_) {}
+    } catch (_) { /* ignore */ }
   }
 
   load() {
     try {
       const saved = localStorage.getItem(this.storageKey);
-      if (saved) {
-        this.data = new Map(JSON.parse(saved));
-      }
-    } catch (_) {}
-    return this.export();
+      if (saved) this.data = new Map(JSON.parse(saved));
+    } catch (_) { /* ignore */ }
   }
 
   export(): Array<[string, number]> {

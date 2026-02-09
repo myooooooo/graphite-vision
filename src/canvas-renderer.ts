@@ -39,7 +39,6 @@ export class CanvasRenderer {
     this.ctx.lineWidth = settings.thickness;
     this.ctx.font = '12px Inter, sans-serif';
     this.ctx.fillStyle = 'rgba(243,239,255,0.85)';
-
     for (let i = 1; i < divisions; i++) {
       const x = stepX * i;
       this.ctx.beginPath();

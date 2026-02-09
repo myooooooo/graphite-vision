@@ -59,6 +59,14 @@ let gridTimeout;
 let thicknessTimeout;
 let colorTimeout;
 let lastHover = null;
+let seeded = false;
+
+function openFileDialog() {
+  if (!fileInput) return;
+  fileInput.disabled = false;
+  fileInput.value = '';
+  fileInput.click();
+}
 
 function savePalette() { try { localStorage.setItem('gradient_palette', JSON.stringify(Array.from(paletteSet.entries()))); } catch (_) {} }
 function resetPalette(clearStorage = true) {
@@ -128,6 +136,18 @@ function refreshPaletteList() {
   });
 }
 
+function seedPalette() {
+  // ajoute toutes les 20 nuances Darwin de clair à sombre
+  const total = DARWIN_PENCILS.length - 1;
+  DARWIN_PENCILS.forEach((p, idx) => {
+    const gray = Math.round((idx / total) * 255);
+    paletteSet.set(p, gray);
+  });
+  refreshPaletteList();
+  palettePanel.hidden = false;
+  seeded = true;
+}
+
 function posterize5Levels(srcData) {
   const data = new Uint8ClampedArray(srcData.data);
   const levels = [20, 70, 128, 185, 240];
@@ -179,16 +199,30 @@ if (dropZone) {
   ['dragleave','drop'].forEach(evt => dropZone.addEventListener(evt, e => {e.preventDefault(); dropZone.classList.remove('dragging');}));
   dropZone.addEventListener('drop', e => { const file = e.dataTransfer.files[0]; if (file) handleFile(file); });
   dropZone.addEventListener('click', () => {
-    fileInput.value = '';
-    fileInput.click();
+    openFileDialog();
   });
 }
-if (emptyImportBtn) emptyImportBtn.addEventListener('click', () => fileInput.click());
+if (emptyImportBtn) emptyImportBtn.addEventListener('click', () => { openFileDialog(); });
 if (exampleGrid) {
   exampleGrid.addEventListener('click', (e) => {
     const card = e.target.closest('.example-thumb');
     if (!card) return;
-    showToast('Exemples offline non disponibles. Importez votre image.');
+    const mapping = {
+      portrait: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=85',
+      architecture: 'https://images.unsplash.com/photo-1505842679547-4976cbaedfa6?auto=format&fit=crop&w=1400&q=85',
+      nature: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1400&q=85',
+    };
+    const key = card.dataset.example;
+    const url = mapping[key];
+    if (!url) return;
+    showToast('Téléchargement de l’exemple…');
+    fetch(url)
+      .then(res => res.blob())
+      .then(blob => {
+        const file = new File([blob], `${key}.jpg`, { type: blob.type || 'image/jpeg' });
+        handleFile(file);
+      })
+      .catch(() => showToast('❌ Impossible de charger cet exemple.'));
   });
 }
 fileInput.addEventListener('change', e => {
@@ -326,20 +360,23 @@ if (zoomSlider) {
 
 exportImageBtn.addEventListener('click', async () => {
   if (!graySnapshot) { showToast('❌ Charge une image avant d’exporter.'); return; }
-  const usedPencils = Array.from(paletteSet.entries());
-  if (!usedPencils.length) { showToast('Clique sur l’image pour échantillonner avant export.'); return; }
+
+  // Image traitée (posterize + grille)
   const w = canvasBW.width;
   const h = canvasBW.height;
-  const legendWidth = 180;
-  const legendHeight = 40 + usedPencils.length * 24;
-  const exportHeight = Math.max(h, legendHeight);
+  const legendWidth = 200;
+
   const out = document.createElement('canvas');
-  out.width = w + legendWidth + 20;
-  out.height = exportHeight;
+  out.width = w + legendWidth + 32;
+  out.height = h;
   const octx = out.getContext('2d');
   octx.imageSmoothingEnabled = false;
+
+  // couche NB
   const dataToDraw = posterizeOn ? posterize5Levels(graySnapshot) : graySnapshot;
   octx.putImageData(dataToDraw, 0, 0);
+
+  // grille si active
   if (gridDivisions > 0) {
     octx.save();
     octx.strokeStyle = gridColor;
@@ -353,34 +390,39 @@ exportImageBtn.addEventListener('click', async () => {
     for (let j = 1; j < gridDivisions; j++) { const y = stepY * j; octx.beginPath(); octx.moveTo(0,y); octx.lineTo(w,y); octx.stroke(); octx.fillText(letters[j] || j+1, 6, y-4); }
     octx.restore();
   }
-  const legendX = w + 10;
+
+  // Légende des teintes (palette utilisée ou toutes les teintes si vide)
+  const pencils = Array.from(paletteSet.entries()).sort((a,b)=>a[1]-b[1]);
+  const legend = pencils.length ? pencils : DARWIN_PENCILS.map((p, idx) => [p, Math.round((idx/(DARWIN_PENCILS.length-1))*255)]);
+  const legendX = w + 16;
   octx.save();
-  octx.fillStyle = 'rgba(20,15,34,0.9)';
-  octx.fillRect(w, 0, legendWidth, exportHeight);
+  octx.fillStyle = 'rgba(20,15,34,0.92)';
+  octx.fillRect(w, 0, legendWidth, h);
   octx.strokeStyle = 'rgba(147,112,219,0.35)';
-  octx.strokeRect(w + 0.5, 0.5, legendWidth - 1, exportHeight - 1);
+  octx.strokeRect(w + 0.5, 0.5, legendWidth - 1, h - 1);
   octx.font = '14px Inter, sans-serif';
   octx.fillStyle = '#f3efff';
-  octx.fillText('Crayons utilisés', legendX, 24);
-  usedPencils.sort((a,b)=>DARWIN_PENCILS.indexOf(a[0])-DARWIN_PENCILS.indexOf(b[0]))
-    .forEach(([p,g], idx)=>{
-      const y = 50 + idx * 24;
-      const gray = g ?? Math.round((DARWIN_PENCILS.indexOf(p)/(DARWIN_PENCILS.length-1))*255);
-      octx.fillStyle = `rgb(${gray},${gray},${gray})`;
-      octx.fillRect(legendX, y-12, 24, 16);
-      octx.strokeStyle = 'rgba(147,112,219,0.4)';
-      octx.strokeRect(legendX, y-12, 24, 16);
-      octx.fillStyle = '#f3efff';
-      octx.fillText(p, legendX + 34, y + 2);
-    });
+  octx.fillText('Teintes / Grille', legendX, 24);
+
+  legend.forEach(([p,g], idx)=>{
+    const y = 52 + idx * 26;
+    const gray = g ?? Math.round((DARWIN_PENCILS.indexOf(p)/(DARWIN_PENCILS.length-1))*255);
+    octx.fillStyle = `rgb(${gray},${gray},${gray})`;
+    octx.fillRect(legendX, y-12, 28, 18);
+    octx.strokeStyle = 'rgba(147,112,219,0.4)';
+    octx.strokeRect(legendX, y-12, 28, 18);
+    octx.fillStyle = '#f3efff';
+    octx.fillText(p, legendX + 38, y + 2);
+  });
   octx.restore();
+
   out.toBlob((blob) => {
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = 'gradient-fiche.png';
     a.click();
     URL.revokeObjectURL(a.href);
-    showToast('Fiche générée !');
+    showToast('Fiche exportée (image + grille + teintes).');
   }, 'image/png');
 });
 

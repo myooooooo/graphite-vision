@@ -34,10 +34,9 @@
 
     <aside class="sidebar glass leftbar">
       <input type="file" id="file-input" accept="image/*" hidden />
-      <button class="btn neon import-btn" id="drop-zone">Importer une image</button>
       <div class="panel-section" id="controls">
         <h3 class="section-title">Import</h3>
-        <button class="btn btn-primary" id="drop-zone" aria-label="Importer une image (JPG, PNG, WebP)"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2v8m0 0l-3-3m3 3l3-3M3 14h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Importer une image</button>
+        <button type="button" class="btn btn-primary" id="drop-zone" aria-label="Importer une image (JPG, PNG, WebP)"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2v8m0 0l-3-3m3 3l3-3M3 14h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Importer une image</button>
 
         <h3 class="section-title">Simplification</h3>
         <label class="control-item toggle-control">
@@ -100,9 +99,9 @@
         </button>
         <div class="empty-divider"></div>
         <div class="example-grid">
-          <div class="example-thumb" data-example="sample1"><img src="https://dummyimage.com/200x120/111/999&text=Portrait" alt="Exemple Portrait"><span>Portrait</span></div>
-          <div class="example-thumb" data-example="sample2"><img src="https://dummyimage.com/200x120/111/999&text=Architecture" alt="Exemple Architecture"><span>Architecture</span></div>
-          <div class="example-thumb" data-example="sample3"><img src="https://dummyimage.com/200x120/111/999&text=Nature" alt="Exemple Nature"><span>Nature</span></div>
+          <div class="example-thumb" data-example="portrait"><img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=400&q=80" alt="Exemple Portrait"><span>Portrait</span></div>
+          <div class="example-thumb" data-example="architecture"><img src="https://images.unsplash.com/photo-1505842679547-4976cbaedfa6?auto=format&fit=crop&w=400&q=80" alt="Exemple Architecture"><span>Architecture</span></div>
+          <div class="example-thumb" data-example="nature"><img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=400&q=80" alt="Exemple Nature"><span>Nature</span></div>
         </div>
       </div>
       <div class="panel glass switcher" id="canvas-area" hidden>

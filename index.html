@@ -297,6 +297,34 @@
   </main>
   </div>
 
+  <!-- Tutorial Overlay for First-Time Users -->
+  <div class="tutorial-overlay" id="tutorial-overlay" hidden>
+    <div class="tutorial-backdrop" id="tutorial-backdrop"></div>
+    <div class="tutorial-card glass" id="tutorial-card">
+      <div class="tutorial-header">
+        <div class="tutorial-step-indicator">
+          <span class="step-current" id="tutorial-step-num">1</span>
+          <span class="step-separator">/</span>
+          <span class="step-total">4</span>
+        </div>
+        <button class="tutorial-skip" id="tutorial-skip" aria-label="Passer le tutoriel">
+          ✕
+        </button>
+      </div>
+      <div class="tutorial-content">
+        <div class="tutorial-icon" id="tutorial-icon">✨</div>
+        <h2 class="tutorial-title" id="tutorial-title">Bienvenue sur GRADIENT!</h2>
+        <p class="tutorial-description" id="tutorial-description">
+          Transforme tes photos en références de dessin avec grille et valeurs graphite.
+        </p>
+      </div>
+      <div class="tutorial-footer">
+        <button class="btn btn-secondary" id="tutorial-prev" hidden>Précédent</button>
+        <button class="btn btn-primary" id="tutorial-next">Suivant</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Charge le moteur avant l'UI pour garantir l'accès aux fonctions globales -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="js/core.js"></script>

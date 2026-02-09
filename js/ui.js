@@ -1064,15 +1064,34 @@ function showKeyboardShortcuts() {
       list.appendChild(row);
     });
 
+    const buttonContainer = document.createElement('div');
+    buttonContainer.style.cssText = 'display: flex; gap: 8px;';
+
+    const tutorialBtn = document.createElement('button');
+    tutorialBtn.textContent = '📚 Voir le tutoriel';
+    tutorialBtn.className = 'btn btn-primary';
+    tutorialBtn.style.flex = '1';
+    tutorialBtn.onclick = () => {
+      modal.remove();
+      overlay.remove();
+      if (typeof TutorialSystem !== 'undefined') {
+        TutorialSystem.currentStep = 0;
+        TutorialSystem.show();
+      }
+    };
+
     const closeBtn = document.createElement('button');
     closeBtn.textContent = 'Fermer (Échap)';
     closeBtn.className = 'btn btn-secondary';
-    closeBtn.style.width = '100%';
-    closeBtn.onclick = () => modal.remove();
+    closeBtn.style.flex = '1';
+    closeBtn.onclick = () => { modal.remove(); overlay.remove(); };
+
+    buttonContainer.appendChild(tutorialBtn);
+    buttonContainer.appendChild(closeBtn);
 
     modal.appendChild(title);
     modal.appendChild(list);
-    modal.appendChild(closeBtn);
+    modal.appendChild(buttonContainer);
 
     const overlay = document.createElement('div');
     overlay.style.cssText = `
@@ -1100,3 +1119,152 @@ function showKeyboardShortcuts() {
     document.addEventListener('keydown', escHandler);
   }
 }
+
+// ===== Interactive Tutorial System =====
+const TutorialSystem = {
+  currentStep: 0,
+  steps: [
+    {
+      icon: '✨',
+      title: 'Bienvenue sur GRADIENT!',
+      description: 'Transforme tes photos en références de dessin avec grille et valeurs graphite. Ce tutoriel rapide va t\'expliquer comment utiliser l\'outil.'
+    },
+    {
+      icon: '📁',
+      title: 'Importer une image',
+      description: 'Glisse-dépose une photo ou clique sur "Choisir un fichier". Tu peux aussi essayer les exemples ci-dessous pour voir GRADIENT en action.',
+      highlight: '#controls'
+    },
+    {
+      icon: '🎨',
+      title: 'Utiliser la loupe',
+      description: 'Survole l\'image convertie pour voir les valeurs graphite en temps réel. La loupe affiche le crayon exact à utiliser (9H à 9B) pour chaque zone.',
+      highlight: '#canvas-area'
+    },
+    {
+      icon: '💾',
+      title: 'Exporter ton travail',
+      description: 'Exporte en PNG ou PDF avec la grille et les valeurs. Parfait pour imprimer ou garder comme référence. Utilise aussi les raccourcis clavier (?) pour aller plus vite!',
+      highlight: '.actions'
+    }
+  ],
+
+  init() {
+    const hasSeenTutorial = localStorage.getItem('gradient_tutorial_seen');
+    if (hasSeenTutorial) return;
+
+    // Attendre que le loading screen disparaisse
+    setTimeout(() => {
+      this.show();
+    }, 1800);
+  },
+
+  show() {
+    const overlay = document.getElementById('tutorial-overlay');
+    if (!overlay) return;
+
+    overlay.removeAttribute('hidden');
+    this.currentStep = 0;
+    this.render();
+    this.attachEventListeners();
+  },
+
+  hide() {
+    const overlay = document.getElementById('tutorial-overlay');
+    if (overlay) {
+      overlay.style.animation = 'fadeOut 0.3s ease';
+      setTimeout(() => {
+        overlay.setAttribute('hidden', '');
+        overlay.style.animation = '';
+      }, 300);
+    }
+    this.removeHighlights();
+    localStorage.setItem('gradient_tutorial_seen', 'true');
+  },
+
+  render() {
+    const step = this.steps[this.currentStep];
+    if (!step) return;
+
+    document.getElementById('tutorial-step-num').textContent = this.currentStep + 1;
+    document.querySelector('.step-total').textContent = this.steps.length;
+    document.getElementById('tutorial-icon').textContent = step.icon;
+    document.getElementById('tutorial-title').textContent = step.title;
+    document.getElementById('tutorial-description').textContent = step.description;
+
+    // Boutons navigation
+    const prevBtn = document.getElementById('tutorial-prev');
+    const nextBtn = document.getElementById('tutorial-next');
+
+    if (this.currentStep === 0) {
+      prevBtn.setAttribute('hidden', '');
+    } else {
+      prevBtn.removeAttribute('hidden');
+    }
+
+    if (this.currentStep === this.steps.length - 1) {
+      nextBtn.textContent = 'Commencer';
+    } else {
+      nextBtn.textContent = 'Suivant';
+    }
+
+    // Highlight element if specified
+    this.removeHighlights();
+    if (step.highlight) {
+      const element = document.querySelector(step.highlight);
+      if (element) {
+        element.classList.add('tutorial-highlight');
+      }
+    }
+  },
+
+  removeHighlights() {
+    document.querySelectorAll('.tutorial-highlight').forEach(el => {
+      el.classList.remove('tutorial-highlight');
+    });
+  },
+
+  next() {
+    if (this.currentStep < this.steps.length - 1) {
+      this.currentStep++;
+      this.render();
+    } else {
+      this.hide();
+    }
+  },
+
+  prev() {
+    if (this.currentStep > 0) {
+      this.currentStep--;
+      this.render();
+    }
+  },
+
+  attachEventListeners() {
+    document.getElementById('tutorial-next').onclick = () => this.next();
+    document.getElementById('tutorial-prev').onclick = () => this.prev();
+    document.getElementById('tutorial-skip').onclick = () => this.hide();
+    document.getElementById('tutorial-backdrop').onclick = () => this.hide();
+
+    // Keyboard navigation
+    const keyHandler = (e) => {
+      if (!document.getElementById('tutorial-overlay').hasAttribute('hidden')) {
+        if (e.key === 'ArrowRight' || e.key === 'Enter') {
+          this.next();
+        } else if (e.key === 'ArrowLeft') {
+          this.prev();
+        } else if (e.key === 'Escape') {
+          this.hide();
+        }
+      }
+    };
+    document.addEventListener('keydown', keyHandler);
+  }
+};
+
+// Initialize tutorial on page load (after loading screen)
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    TutorialSystem.init();
+  }, 1500);
+});

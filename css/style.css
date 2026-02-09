@@ -701,3 +701,138 @@ select:focus-visible {
   transform: scale(1.05);
   box-shadow: 0 4px 12px rgba(154, 77, 255, 0.3);
 }
+
+/* ===== Tutorial Overlay ===== */
+.tutorial-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 999998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease;
+}
+
+.tutorial-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1;
+}
+
+.tutorial-card {
+  position: relative;
+  z-index: 2;
+  max-width: 500px;
+  width: 90%;
+  padding: 32px;
+  border-radius: 16px;
+  animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.tutorial-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.tutorial-step-indicator {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.step-current {
+  font-size: 24px;
+  color: var(--accent);
+}
+
+.step-separator {
+  font-size: 18px;
+}
+
+.step-total {
+  font-size: 18px;
+}
+
+.tutorial-skip {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 24px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.tutorial-skip:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text);
+}
+
+.tutorial-content {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.tutorial-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.tutorial-title {
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, #9a4dff, #6dd5ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.tutorial-description {
+  font-size: 16px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.tutorial-footer {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.tutorial-footer .btn {
+  flex: 1;
+  min-width: 120px;
+}
+
+/* Tutorial Spotlight Effect */
+.tutorial-highlight {
+  position: relative;
+  z-index: 999999;
+  box-shadow: 0 0 0 4px rgba(154, 77, 255, 0.5), 0 0 40px rgba(154, 77, 255, 0.6);
+  animation: tutorialPulse 2s ease-in-out infinite;
+}
+
+@keyframes tutorialPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 4px rgba(154, 77, 255, 0.5), 0 0 40px rgba(154, 77, 255, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(154, 77, 255, 0.7), 0 0 60px rgba(154, 77, 255, 0.8);
+  }
+}

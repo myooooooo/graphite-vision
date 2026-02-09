@@ -89,7 +89,7 @@ function updateStatus(gray, pencil, x, y) {
 }
 
 function setCrosshair(clientX, clientY) {
-  const rect = canvasBW.parentElement.getBoundingClientRect();
+  const rect = canvasBW.getBoundingClientRect();
   crosshair.style.display = 'block';
   crosshair.style.left = `${clientX - rect.left}px`;
   crosshair.style.top = `${clientY - rect.top}px`;
@@ -106,7 +106,10 @@ function renderMagnifier(clientX, clientY, sourceX, sourceY, zoom = 4, pencil = 
   ctxMag.save();
   ctxMag.clearRect(0, 0, size, size);
   ctxMag.beginPath(); ctxMag.arc(half, half, half - 2, 0, Math.PI * 2); ctxMag.clip();
-  ctxMag.drawImage(canvasBW, sourceX - size/(2*zoom), sourceY - size/(2*zoom), size/zoom, size/zoom, 0, 0, size, size);
+  const srcSize = size / zoom;
+  const cx = sourceX + 0.5;
+  const cy = sourceY + 0.5;
+  ctxMag.drawImage(canvasBW, cx - srcSize / 2, cy - srcSize / 2, srcSize, srcSize, 0, 0, size, size);
   ctxMag.strokeStyle = '#bf40bf'; ctxMag.lineWidth = 1;
   ctxMag.beginPath(); ctxMag.moveTo(half, 0); ctxMag.lineTo(half, size); ctxMag.moveTo(0, half); ctxMag.lineTo(size, half); ctxMag.stroke();
   ctxMag.restore();
@@ -207,22 +210,36 @@ if (exampleGrid) {
   exampleGrid.addEventListener('click', (e) => {
     const card = e.target.closest('.example-thumb');
     if (!card) return;
-    const mapping = {
-      portrait: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=85',
-      architecture: 'https://images.unsplash.com/photo-1505842679547-4976cbaedfa6?auto=format&fit=crop&w=1400&q=85',
-      nature: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1400&q=85',
-    };
     const key = card.dataset.example;
-    const url = mapping[key];
-    if (!url) return;
-    showToast('Téléchargement de l’exemple…');
-    fetch(url)
-      .then(res => res.blob())
-      .then(blob => {
-        const file = new File([blob], `${key}.jpg`, { type: blob.type || 'image/jpeg' });
-        handleFile(file);
-      })
-      .catch(() => showToast('❌ Impossible de charger cet exemple.'));
+    const mapping = {
+      portrait: [
+        'https://picsum.photos/id/1027/1400/900',
+      ],
+      architecture: [
+        'https://picsum.photos/id/1011/1400/900',
+        'https://picsum.photos/id/1006/1400/900',
+      ],
+      nature: [
+        'https://picsum.photos/id/1024/1400/900',
+      ],
+    };
+    const candidates = mapping[key];
+    if (!candidates || !candidates.length) return;
+    const tryFetch = (urls) => {
+      if (!urls.length) { showToast('❌ Impossible de charger cet exemple.'); return; }
+      const url = urls[0];
+      fetch(url)
+        .then(res => {
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          return res.blob();
+        })
+        .then(blob => {
+          const file = new File([blob], `${key}.jpg`, { type: blob.type || 'image/jpeg' });
+          handleFile(file);
+        })
+        .catch(() => tryFetch(urls.slice(1)));
+    };
+    tryFetch(candidates);
   });
 }
 fileInput.addEventListener('change', e => {
@@ -273,10 +290,12 @@ function processHover(evt) {
   const idx = (y * canvasBW.width + x) * 4;
   const gray = graySnapshot.data[idx];
   const pencil = calculatePencilGrade(gray);
+  const dispX = rect.left + (x + 0.5) / scaleX;
+  const dispY = rect.top + (y + 0.5) / scaleY;
   updateStatus(gray, pencil, x, y);
-  setCrosshair(evt.clientX, evt.clientY);
-  renderMagnifier(evt.clientX, evt.clientY, x, y, zoomLevel, pencil, gray);
-  lastHover = { clientX: evt.clientX, clientY: evt.clientY, x, y, pencil, gray };
+  setCrosshair(dispX, dispY);
+  renderMagnifier(dispX, dispY, x, y, zoomLevel, pencil, gray);
+  lastHover = { clientX: dispX, clientY: dispY, x, y, pencil, gray };
   // surligner le crayon correspondant dans la palette
   document.querySelectorAll('.palette-item').forEach(item => {
     item.classList.toggle('active', item.dataset.pencil === pencil);
@@ -349,7 +368,9 @@ if (zoomSlider) {
       const idx = (y * canvasBW.width + x) * 4;
       const gray = graySnapshot.data[idx];
       const pencil = calculatePencilGrade(gray);
-      lastHover = { clientX: cx, clientY: cy, x, y, pencil, gray };
+      const dispX = rect.left + (x + 0.5) / scaleX;
+      const dispY = rect.top + (y + 0.5) / scaleY;
+      lastHover = { clientX: dispX, clientY: dispY, x, y, pencil, gray };
     }
     if (lastHover) {
       magnifier.style.display = 'block';

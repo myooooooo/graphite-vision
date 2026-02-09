@@ -67,11 +67,24 @@ Pour un SEO optimal, vous devez créer les fichiers suivants à partir de votre 
 
 ## Outils recommandés
 
+### ⚡ Générateurs intégrés (RECOMMANDÉ)
+1. **favicon-generator.html** - Générateur de favicons local
+   - Ouvrir dans votre navigateur
+   - Génère tous les PNG instantanément
+   - Téléchargement direct des fichiers
+   - ✨ Aucune installation requise
+
+2. **social-media-generator.html** - Images pour réseaux sociaux
+   - Génère og-image.png (1200×630)
+   - Génère twitter-card.png (1200×675)
+   - Design automatique avec logo et texte
+
 ### En ligne (gratuit)
 1. **Favicon Generator**: https://realfavicongenerator.net/
    - Upload votre logo
    - Génère tous les formats automatiquement
    - Fournit le code HTML
+   - **⚠️ Nécessaire pour créer favicon.ico**
 
 2. **Canva**: https://www.canva.com/
    - Pour créer les images Open Graph/Twitter
@@ -84,14 +97,15 @@ Pour un SEO optimal, vous devez créer les fichiers suivants à partir de votre 
 
 ## Checklist de création
 
-- [ ] Créer un logo carré avec fond transparent (SVG ou PNG 1024x1024)
-- [ ] Générer toutes les tailles de favicon
-- [ ] Créer l'image Open Graph (avec texte descriptif)
-- [ ] Créer la Twitter Card (format paysage)
-- [ ] Prendre un screenshot de l'application
+- [x] Créer un logo carré avec fond transparent (SVG ou PNG 1024x1024) ✅
+- [ ] Ouvrir `favicon-generator.html` et générer tous les favicons PNG
+- [ ] Ouvrir `social-media-generator.html` et générer og-image.png et twitter-card.png
+- [ ] Uploader `favicon-32x32.png` sur https://realfavicongenerator.net/ pour créer favicon.ico
+- [ ] Prendre un screenshot de l'application (Ctrl+Shift+S dans Firefox/Chrome)
+- [ ] Sauvegarder le screenshot en 1280x720 ou plus
 - [ ] Tester les favicons sur https://realfavicongenerator.net/favicon_checker
 - [ ] Vérifier l'affichage sur mobile (iOS et Android)
-- [ ] Tester le partage sur les réseaux sociaux
+- [ ] Tester le partage sur les réseaux sociaux (Facebook, Twitter, LinkedIn)
 
 ## Design recommendations
 

@@ -273,8 +273,8 @@ async function handleFile(file) {
     controls.hidden = false;
     if (emptyState) emptyState.style.display = 'none';
     // Par défaut : vue NB uniquement
-    toggleBwOnly.checked = false;
-    canvasOriginal.parentElement.style.display = 'none';
+    toggleBwOnly.checked = true;
+    canvasOriginal.parentElement.style.display = 'block';
     const toggleLabel = document.querySelector('label.toggle');
     if (toggleLabel) toggleLabel.childNodes.forEach(n => {
       if (n.nodeType === Node.TEXT_NODE) n.textContent = ' Afficher original et NB';

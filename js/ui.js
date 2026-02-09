@@ -10,22 +10,31 @@ const {
 // Loading Screen Management
 window.addEventListener('DOMContentLoaded', () => {
   const loadingScreen = document.getElementById('loading-screen');
+  if (!loadingScreen) return;
 
-  // Simuler un chargement minimum pour l'effet visuel
   const minLoadTime = 1200;
+  const maxLoadTime = 3000; // Fallback maximum
   const startTime = Date.now();
+
+  const hideLoadingScreen = () => {
+    if (loadingScreen && !loadingScreen.classList.contains('hidden')) {
+      loadingScreen.classList.add('hidden');
+      setTimeout(() => {
+        if (loadingScreen.parentNode) {
+          loadingScreen.remove();
+        }
+      }, 500);
+    }
+  };
 
   window.addEventListener('load', () => {
     const elapsed = Date.now() - startTime;
     const remaining = Math.max(0, minLoadTime - elapsed);
-
-    setTimeout(() => {
-      if (loadingScreen) {
-        loadingScreen.classList.add('hidden');
-        setTimeout(() => loadingScreen.remove(), 500);
-      }
-    }, remaining);
+    setTimeout(hideLoadingScreen, remaining);
   });
+
+  // Fallback: force hide after max time
+  setTimeout(hideLoadingScreen, maxLoadTime);
 });
 
 const fileInputPlain = document.getElementById('file-input-plain');

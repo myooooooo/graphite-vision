@@ -7,7 +7,10 @@ const {
   drawImageToCanvas,
 } = window.gradientEngine;
 
-const fileInput = document.getElementById('file-input');
+const fileInputPlain = document.getElementById('file-input-plain');
+const fileInputHidden = document.getElementById('file-input');
+// point d'entrée unique pour l'import
+const fileInput = fileInputPlain || fileInputHidden;
 const dropZone = document.getElementById('drop-zone');
 const canvasArea = document.getElementById('canvas-area');
 const canvasOriginal = document.getElementById('canvas-original');
@@ -34,6 +37,7 @@ const gridThicknessInput = document.getElementById('grid-thickness');
 const gridThicknessValue = document.getElementById('grid-thickness-value');
 const zoomSlider = document.getElementById('zoom-slider');
 const zoomValue = document.getElementById('zoom-value');
+const presetSelector = document.getElementById('preset-selector');
 const palettePanel = document.getElementById('palette-panel');
 const paletteList = document.getElementById('palette-list');
 const progressBar = document.getElementById('progress-bar');
@@ -45,6 +49,14 @@ const emptyImportBtn = document.getElementById('empty-import');
 const emptyState = document.getElementById('empty-state');
 const loader = document.getElementById('loader');
 const exampleGrid = document.querySelector('.example-grid');
+const btnTestPattern = document.getElementById('btn-test-pattern');
+const debugPanel = null;
+const toggleDebugBtn = null;
+const debugLoadBtn = null;
+const logDebug = (...args) => console.log(...args);
+// Forcer l'affichage des panneaux pour le debug
+if (workspace) workspace.hidden = false;
+if (canvasArea) canvasArea.hidden = false;
 
 const ctxOrig = canvasOriginal.getContext('2d');
 const ctxBW = canvasBW.getContext('2d');
@@ -64,13 +76,20 @@ let gridTimeout;
 let thicknessTimeout;
 let colorTimeout;
 let lastHover = null;
-let seeded = false;
+const PRESETS = {
+  'hi-contrast': { posterize: true, grid: { divisions: 4, color: '#8A22BE', thickness: 1.5 } },
+  'fine-details': { posterize: false, grid: { divisions: 8, color: '#6dd5ff', thickness: 0.6 } },
+  'quick-sketch': { posterize: true, grid: { divisions: 0, color: '#8A22BE', thickness: 1 } },
+};
 
 function openFileDialog() {
   if (!fileInput) return;
   fileInput.disabled = false;
   fileInput.value = '';
+  // double déclenchement pour contourner certains blocages (Safari/Chrome)
+  fileInput.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
   fileInput.click();
+  logDebug('[GRADIENT] openFileDialog triggered');
 }
 
 if (copyHexBtn) {
@@ -78,6 +97,46 @@ if (copyHexBtn) {
     if (!statusHex) return;
     navigator.clipboard?.writeText(statusHex.textContent || '');
     showToast('Valeur hex copiée');
+  });
+}
+
+if (toggleDebugBtn && debugPanel) {
+  toggleDebugBtn.addEventListener('click', () => {
+    const next = debugPanel.hidden;
+    debugPanel.hidden = !next;
+    toggleDebugBtn.textContent = next ? 'Mode test (masquer)' : 'Mode test (état)';
+    if (next) updateDebugPanel();
+  });
+}
+// Forcer l'affichage debug pour cette phase de test
+if (workspace) workspace.hidden = true;
+if (canvasArea) canvasArea.hidden = true;
+if (fileInputPlain) {
+  fileInputPlain.addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (file) { logDebug(`[GRADIENT] plain file selected ${file.name}`); handleFile(file); }
+  });
+}
+
+if (btnTestPattern) {
+  btnTestPattern.addEventListener('click', () => {
+    logDebug('[GRADIENT] drawing test pattern');
+    const w = 400, h = 300;
+    canvasBW.width = w; canvasBW.height = h;
+    canvasOriginal.width = w; canvasOriginal.height = h;
+    ctxBW.fillStyle = '#777'; ctxBW.fillRect(0,0,w,h);
+    ctxOrig.fillStyle = '#777'; ctxOrig.fillRect(0,0,w,h);
+    graySnapshot = ctxBW.getImageData(0,0,w,h);
+    renderBWView();
+    workspace.hidden = false; canvasArea.hidden = false; emptyState.style.display = 'none'; statusBar.hidden = false;
+    updateStatus(119, 'HB', 0, 0);
+    updateDebugPanel();
+  });
+}
+
+if (presetSelector) {
+  presetSelector.addEventListener('change', (e) => {
+    applyPreset(e.target.value);
   });
 }
 
@@ -211,6 +270,8 @@ function renderBWView() {
   if (posterizeOn) dataToDraw = posterize5Levels(graySnapshot);
   ctxBW.putImageData(dataToDraw, 0, 0);
   if (gridDivisions > 0) drawGrid(gridDivisions);
+  updateDebugPanel();
+  logDebug(`[GRADIENT] renderBWView done ${canvasBW.width}x${canvasBW.height}`);
 }
 
 if (dropZone) {
@@ -218,6 +279,7 @@ if (dropZone) {
   ['dragleave','drop'].forEach(evt => dropZone.addEventListener(evt, e => {e.preventDefault(); dropZone.classList.remove('dragging');}));
   dropZone.addEventListener('drop', e => { const file = e.dataTransfer.files[0]; if (file) handleFile(file); });
   dropZone.addEventListener('click', () => {
+    logDebug('[GRADIENT] dropZone click');
     openFileDialog();
   });
 }
@@ -260,38 +322,65 @@ if (exampleGrid) {
 }
 fileInput.addEventListener('change', e => {
   const file = e.target.files[0];
-  if (file) handleFile(file);
+  logDebug('[GRADIENT] input change');
+  if (file) { logDebug(`[GRADIENT] file selected ${file.name}`); showToast(`Fichier détecté : ${file.name}`); handleFile(file); }
+  else { logDebug('[GRADIENT] file selection cancelled'); }
   e.target.value = '';
 });
 
 async function handleFile(file) {
   const MAX_SIZE = 10 * 1024 * 1024;
   const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
-  if (!ALLOWED_TYPES.includes(file.type)) { showToast('❌ Format non supporté (PNG/JPG/WebP uniquement)'); return; }
-  if (file.size > MAX_SIZE) { showToast('❌ Fichier trop lourd (max 10 MB)'); return; }
+  if (!ALLOWED_TYPES.includes(file.type)) { showToast('❌ Format non supporté (PNG/JPG/WebP uniquement)'); logDebug('file.type rejection'); return; }
+  if (file.size > MAX_SIZE) { showToast('❌ Fichier trop lourd (max 10 MB)'); logDebug('file.size rejection'); return; }
   try {
+    logDebug(`[GRADIENT] handleFile start ${file.name} ${file.type} ${file.size}`);
+    showToast('Import en cours...');
+    if (statusMeta) statusMeta.textContent = `Import de ${file.name}...`;
     resetPalette();
     showProgress();
-    const img = await loadImageFile(file);
-    drawImageToCanvas(img, canvasOriginal, ctxOrig);
-    drawImageToCanvas(img, canvasBW, ctxBW);
-    graySnapshot = ctxBW.getImageData(0, 0, canvasBW.width, canvasBW.height);
-    toGrayscale(graySnapshot);
+   const img = await loadImageFile(file);
+   logDebug(`[GRADIENT] image loaded ${img.naturalWidth}x${img.naturalHeight}`);
+   if (!img.naturalWidth || !img.naturalHeight) throw new Error('Image vide');
+    try { drawImageToCanvas(img, canvasOriginal, ctxOrig); } catch(e){ logDebug('drawImageToCanvas original error '+e); throw e; }
+    try { drawImageToCanvas(img, canvasBW, ctxBW); } catch(e){ logDebug('drawImageToCanvas bw error '+e); throw e; }
+    logDebug(`[GRADIENT] canvas set to ${canvasBW.width}x${canvasBW.height}`);
+    try {
+      graySnapshot = ctxBW.getImageData(0, 0, canvasBW.width, canvasBW.height);
+    } catch (e) {
+      logDebug(`[GRADIENT] getImageData error ${e}`);
+      throw e;
+    }
+    logDebug(`[GRADIENT] snapshot length ${graySnapshot?.data?.length || 0}`);
+    if (!graySnapshot || !graySnapshot.data || !graySnapshot.data.length) throw new Error('Snapshot vide');
+    try {
+      toGrayscale(graySnapshot);
+    } catch (e) {
+      logDebug(`[GRADIENT] toGrayscale error ${e}`);
+      throw e;
+    }
+    logDebug('[GRADIENT] toGrayscale done');
     renderBWView();
-    canvasArea.hidden = false;
-    workspace.hidden = false;
-    controls.hidden = false;
+    if (canvasArea) canvasArea.hidden = false;
+    if (workspace) workspace.hidden = false;
+    if (controls) controls.hidden = false;
     if (emptyState) emptyState.style.display = 'none';
     if (statusBar) statusBar.hidden = false;
+    logDebug('[GRADIENT] UI unhidden');
     toggleBwOnly.checked = false; // NB par défaut
     canvasOriginal.parentElement.style.display = 'none';
     const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
-    statusMeta.textContent = `Fichier : ${file.name} • ${fileSizeMB} MB`;
+    statusMeta.textContent = `Fichier : ${file.name} • ${fileSizeMB} MB • ${canvasBW.width}×${canvasBW.height}`;
     updateStatus('--', '--', '--', '--');
+    updateDebugPanel();
+    showToast('✅ Image importée');
     finishProgress();
+    logDebug('[GRADIENT] handleFile done');
   } catch (err) {
+    logDebug(`[GRADIENT] handleFile error ${err}`);
+    console.error(err);
     finishProgress(true);
-    showToast('❌ Impossible de charger cette image');
+    showToast(`❌ Impossible de charger cette image (${err})`);
   }
 }
 
@@ -496,4 +585,34 @@ function finishProgress(error = false) {
   progressSpan.style.width = error ? '0%' : '100%';
   setTimeout(() => { progressBar.style.display = 'none'; }, 350);
   if (loader) loader.style.display = 'none';
+}
+
+function updateDebugPanel() {
+  if (!debugPanel) return;
+  debugPanel.textContent += [
+    `[STATE] image: ${graySnapshot ? canvasBW.width + 'x' + canvasBW.height : 'n/a'}`,
+    `[STATE] posterize: ${posterizeOn}`,
+    `[STATE] grid: ${gridDivisions} div, color ${gridColor}, ep ${gridThickness}`,
+    `[STATE] zoom: ${zoomLevel}`,
+    `[STATE] palette: ${paletteSet.size} crayons`,
+    '---------------------',
+  ].join('\n') + '\n';
+  debugPanel.scrollTop = debugPanel.scrollHeight;
+}
+function applyPreset(key) {
+  const p = PRESETS[key];
+  if (!p) return;
+  posterizeOn = p.posterize;
+  gridDivisions = p.grid.divisions;
+  gridColor = p.grid.color;
+  gridThickness = p.grid.thickness;
+  togglePosterize.checked = posterizeOn;
+  gridSlider.value = gridDivisions;
+  gridValue.textContent = gridDivisions ? `${gridDivisions}×${gridDivisions}` : 'Désactivée';
+  gridColorInput.value = gridColor;
+  gridThicknessInput.value = gridThickness;
+  gridThicknessValue.textContent = `${gridThickness}px`;
+  clearTimeout(gridTimeout);
+  gridTimeout = setTimeout(() => renderBWView(), 50);
+  updateDebugPanel();
 }

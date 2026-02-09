@@ -43,7 +43,8 @@
       <input type="file" id="file-input" accept="image/*" hidden />
       <div class="panel-section" id="controls">
         <h3 class="section-title">Import</h3>
-        <button type="button" class="btn btn-primary" id="drop-zone" aria-label="Importer une image (JPG, PNG, WebP)"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2v8m0 0l-3-3m3 3l3-3M3 14h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Importer une image</button>
+        <label for="file-input-plain" class="btn btn-primary import-label">Choisir un fichier</label>
+        <input type="file" id="file-input-plain" accept="image/*" class="plain-input" hidden />
 
         <h3 class="section-title">Simplification</h3>
         <label class="control-item toggle-control">
@@ -88,6 +89,20 @@
           </div>
           <input type="range" id="zoom-slider" min="2" max="12" step="0.5" value="4" aria-label="Zoom de la loupe" />
           <span class="control-hint">Ajuste la précision de l'échantillonnage pixel.</span>
+        </label>
+
+        <h3 class="section-title">Presets</h3>
+        <label class="control-item">
+          <div class="control-header">
+            <span class="control-label">Configuration rapide</span>
+          </div>
+          <select id="preset-selector" class="preset-select" aria-label="Choisir un preset">
+            <option value="">Personnalisé</option>
+            <option value="hi-contrast">Contraste élevé</option>
+            <option value="fine-details">Détails fins</option>
+            <option value="quick-sketch">Esquisse rapide</option>
+          </select>
+          <span class="control-hint">Charge des réglages grille/nuances en un clic.</span>
         </label>
 
         <div class="loader" id="loader"></div>
@@ -140,6 +155,7 @@
         <div class="section-title">Actions</div>
         <div class="actions-bottom">
           <button id="export-image" class="btn btn-primary">Exporter ma Fiche de Travail</button>
+          
         </div>
       </div>
     </aside>

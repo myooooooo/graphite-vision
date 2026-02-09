@@ -16,11 +16,19 @@
     }
     return imageData;
   };
-  const loadImageFile = (file) => new Promise((resolve, reject) => {
+  const loadImageFile = (fileOrUrl) => new Promise((resolve, reject) => {
     const img = new Image();
+    img.crossOrigin = 'anonymous';
     img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = URL.createObjectURL(file);
+    img.onerror = () => reject(new Error('img onerror'));
+    if (fileOrUrl instanceof Blob) {
+      const reader = new FileReader();
+      reader.onload = () => { img.src = reader.result; };
+      reader.onerror = () => reject(new Error('FileReader error'));
+      reader.readAsDataURL(fileOrUrl);
+    } else {
+      img.src = fileOrUrl;
+    }
   });
   const drawImageToCanvas = (img, canvas, ctx) => {
     canvas.width = img.naturalWidth;

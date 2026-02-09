@@ -7,6 +7,36 @@ const {
   drawImageToCanvas,
 } = window.gradientEngine;
 
+// Loading Screen Management
+window.addEventListener('DOMContentLoaded', () => {
+  const loadingScreen = document.getElementById('loading-screen');
+  if (!loadingScreen) return;
+
+  const minLoadTime = 1200;
+  const maxLoadTime = 3000; // Fallback maximum
+  const startTime = Date.now();
+
+  const hideLoadingScreen = () => {
+    if (loadingScreen && !loadingScreen.classList.contains('hidden')) {
+      loadingScreen.classList.add('hidden');
+      setTimeout(() => {
+        if (loadingScreen.parentNode) {
+          loadingScreen.remove();
+        }
+      }, 500);
+    }
+  };
+
+  window.addEventListener('load', () => {
+    const elapsed = Date.now() - startTime;
+    const remaining = Math.max(0, minLoadTime - elapsed);
+    setTimeout(hideLoadingScreen, remaining);
+  });
+
+  // Fallback: force hide after max time
+  setTimeout(hideLoadingScreen, maxLoadTime);
+});
+
 const fileInputPlain = document.getElementById('file-input-plain');
 const fileInputHidden = document.getElementById('file-input');
 // point d'entrée unique pour l'import
@@ -57,9 +87,9 @@ const debugPanel = null;
 const toggleDebugBtn = null;
 const debugLoadBtn = null;
 const logDebug = (...args) => console.log(...args);
-// Forcer l'affichage des panneaux pour le debug
-if (workspace) workspace.hidden = false;
-if (canvasArea) canvasArea.hidden = false;
+// Production mode: panneaux masqués par défaut jusqu'à l'import d'image
+if (workspace) workspace.hidden = true;
+if (canvasArea) canvasArea.hidden = true;
 
 const ctxOrig = canvasOriginal.getContext('2d');
 const ctxBW = canvasBW.getContext('2d');
@@ -111,9 +141,6 @@ if (toggleDebugBtn && debugPanel) {
     if (next) updateDebugPanel();
   });
 }
-// Forcer l'affichage debug pour cette phase de test
-if (workspace) workspace.hidden = true;
-if (canvasArea) canvasArea.hidden = true;
 if (fileInputPlain) {
   fileInputPlain.addEventListener('change', e => {
     const file = e.target.files[0];
@@ -406,11 +433,11 @@ fileInput.addEventListener('change', e => {
 async function handleFile(file) {
   const MAX_SIZE = 10 * 1024 * 1024;
   const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
-  if (!ALLOWED_TYPES.includes(file.type)) { showToast('❌ Format non supporté (PNG/JPG/WebP uniquement)'); logDebug('file.type rejection'); return; }
-  if (file.size > MAX_SIZE) { showToast('❌ Fichier trop lourd (max 10 MB)'); logDebug('file.size rejection'); return; }
+  if (!ALLOWED_TYPES.includes(file.type)) { showToast('❌ Format non supporté (PNG/JPG/WebP uniquement)', 'error'); logDebug('file.type rejection'); return; }
+  if (file.size > MAX_SIZE) { showToast('❌ Fichier trop lourd (max 10 MB)', 'error'); logDebug('file.size rejection'); return; }
   try {
     logDebug(`[GRADIENT] handleFile start ${file.name} ${file.type} ${file.size}`);
-    showToast('Import en cours...');
+    showToast('Import en cours...', 'loading');
     if (statusMeta) statusMeta.textContent = `Import de ${file.name}...`;
     resetPalette();
     showProgress();
@@ -448,14 +475,14 @@ async function handleFile(file) {
     statusMeta.textContent = `Fichier : ${file.name} • ${fileSizeMB} MB • ${canvasBW.width}×${canvasBW.height}`;
     updateStatus('--', '--', '--', '--');
     updateDebugPanel();
-    showToast('✅ Image importée');
+    showToast('✅ Image importée avec succès', 'success');
     finishProgress();
     logDebug('[GRADIENT] handleFile done');
   } catch (err) {
     logDebug(`[GRADIENT] handleFile error ${err}`);
     console.error(err);
     finishProgress(true);
-    showToast(`❌ Impossible de charger cette image (${err})`);
+    showToast(`❌ Impossible de charger cette image: ${err.message || 'erreur inconnue'}`, 'error');
   }
 }
 
@@ -635,6 +662,13 @@ exportPdfBtn.addEventListener('click', async () => {
   try {
     showToast('Génération du PDF...');
 
+    // Vérifier que jsPDF est chargé
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+      showToast('❌ Erreur: bibliothèque PDF non chargée');
+      console.error('jsPDF n\'est pas disponible');
+      return;
+    }
+
     // Initialiser jsPDF
     const { jsPDF } = window.jspdf;
     const w = canvasBW.width;
@@ -728,27 +762,95 @@ exportPdfBtn.addEventListener('click', async () => {
   }
 });
 
-function showToast(msg) {
-  let toast = document.getElementById(successToastId);
-  if (!toast) {
-    toast = document.createElement('div');
-    toast.id = successToastId;
-    toast.style.position = 'fixed';
-    toast.style.bottom = '24px';
-    toast.style.right = '24px';
-    toast.style.padding = '12px 16px';
-    toast.style.borderRadius = '10px';
-    toast.style.background = 'rgba(28,20,46,0.9)';
-    toast.style.border = '1px solid rgba(138,43,226,0.5)';
-    toast.style.color = '#f3efff';
-    toast.style.boxShadow = '0 12px 30px rgba(83,45,122,0.45)';
-    toast.style.zIndex = '100000';
-    document.body.appendChild(toast);
+function showToast(msg, type = 'info') {
+  // Déterminer le type depuis le message si pas spécifié
+  if (type === 'info') {
+    if (msg.includes('✅') || msg.includes('exporté') || msg.includes('succès')) type = 'success';
+    else if (msg.includes('❌') || msg.includes('Erreur') || msg.includes('Impossible')) type = 'error';
+    else if (msg.includes('⌨️')) type = 'keyboard';
+    else if (msg.includes('...') || msg.includes('cours')) type = 'loading';
   }
-  toast.textContent = msg;
-  toast.style.opacity = '1';
-  toast.style.display = 'block';
-  setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 1800);
+
+  // Icônes et couleurs selon le type
+  const config = {
+    success: { icon: '✓', bg: 'rgba(20,46,28,0.95)', border: 'rgba(34,197,94,0.6)', shadow: 'rgba(34,197,94,0.3)' },
+    error: { icon: '✕', bg: 'rgba(46,20,28,0.95)', border: 'rgba(239,68,68,0.6)', shadow: 'rgba(239,68,68,0.3)' },
+    warning: { icon: '⚠', bg: 'rgba(46,38,20,0.95)', border: 'rgba(251,146,60,0.6)', shadow: 'rgba(251,146,60,0.3)' },
+    info: { icon: 'ℹ', bg: 'rgba(20,28,46,0.95)', border: 'rgba(59,130,246,0.6)', shadow: 'rgba(59,130,246,0.3)' },
+    keyboard: { icon: '⌨', bg: 'rgba(28,20,46,0.95)', border: 'rgba(138,43,226,0.6)', shadow: 'rgba(138,43,226,0.3)' },
+    loading: { icon: '⟳', bg: 'rgba(28,28,38,0.95)', border: 'rgba(109,213,255,0.6)', shadow: 'rgba(109,213,255,0.3)' }
+  };
+
+  const style = config[type] || config.info;
+
+  const toast = document.createElement('div');
+  toast.className = 'toast-notification';
+  toast.innerHTML = `
+    <div class="toast-icon ${type}">${style.icon}</div>
+    <div class="toast-message">${msg.replace(/^[✅❌⌨️]\s*/, '')}</div>
+  `;
+
+  Object.assign(toast.style, {
+    position: 'fixed',
+    bottom: '24px',
+    right: '24px',
+    padding: '14px 18px',
+    borderRadius: '12px',
+    background: style.bg,
+    border: `1px solid ${style.border}`,
+    color: '#f3efff',
+    boxShadow: `0 12px 30px ${style.shadow}, 0 4px 12px rgba(0,0,0,0.4)`,
+    zIndex: '100000',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    fontFamily: 'Inter, system-ui, sans-serif',
+    fontSize: '14px',
+    fontWeight: '500',
+    backdropFilter: 'blur(10px)',
+    animation: 'toastSlideIn 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)',
+    maxWidth: '400px',
+    wordWrap: 'break-word'
+  });
+
+  const iconStyle = toast.querySelector('.toast-icon');
+  Object.assign(iconStyle.style, {
+    fontSize: '18px',
+    fontWeight: '700',
+    flexShrink: '0',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '24px',
+    height: '24px'
+  });
+
+  if (type === 'loading') {
+    iconStyle.style.animation = 'spin 1s linear infinite';
+  }
+
+  document.body.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.animation = 'toastSlideOut 0.3s ease forwards';
+    setTimeout(() => toast.remove(), 300);
+  }, type === 'loading' ? 3000 : 2500);
+}
+
+// Ajouter les animations CSS pour les toasts
+if (!document.getElementById('toast-animations')) {
+  const style = document.createElement('style');
+  style.id = 'toast-animations';
+  style.textContent = `
+    @keyframes toastSlideIn {
+      from { transform: translateX(400px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes toastSlideOut {
+      to { transform: translateX(400px); opacity: 0; }
+    }
+  `;
+  document.head.appendChild(style);
 }
 
 function showProgress() {
@@ -971,15 +1073,34 @@ function showKeyboardShortcuts() {
       list.appendChild(row);
     });
 
+    const buttonContainer = document.createElement('div');
+    buttonContainer.style.cssText = 'display: flex; gap: 8px;';
+
+    const tutorialBtn = document.createElement('button');
+    tutorialBtn.textContent = '📚 Voir le tutoriel';
+    tutorialBtn.className = 'btn btn-primary';
+    tutorialBtn.style.flex = '1';
+    tutorialBtn.onclick = () => {
+      modal.remove();
+      overlay.remove();
+      if (typeof TutorialSystem !== 'undefined') {
+        TutorialSystem.currentStep = 0;
+        TutorialSystem.show();
+      }
+    };
+
     const closeBtn = document.createElement('button');
     closeBtn.textContent = 'Fermer (Échap)';
     closeBtn.className = 'btn btn-secondary';
-    closeBtn.style.width = '100%';
-    closeBtn.onclick = () => modal.remove();
+    closeBtn.style.flex = '1';
+    closeBtn.onclick = () => { modal.remove(); overlay.remove(); };
+
+    buttonContainer.appendChild(tutorialBtn);
+    buttonContainer.appendChild(closeBtn);
 
     modal.appendChild(title);
     modal.appendChild(list);
-    modal.appendChild(closeBtn);
+    modal.appendChild(buttonContainer);
 
     const overlay = document.createElement('div');
     overlay.style.cssText = `
@@ -1007,3 +1128,152 @@ function showKeyboardShortcuts() {
     document.addEventListener('keydown', escHandler);
   }
 }
+
+// ===== Interactive Tutorial System =====
+const TutorialSystem = {
+  currentStep: 0,
+  steps: [
+    {
+      icon: '✨',
+      title: 'Bienvenue sur GRADIENT!',
+      description: 'Transforme tes photos en références de dessin avec grille et valeurs graphite. Ce tutoriel rapide va t\'expliquer comment utiliser l\'outil.'
+    },
+    {
+      icon: '📁',
+      title: 'Importer une image',
+      description: 'Glisse-dépose une photo ou clique sur "Choisir un fichier". Tu peux aussi essayer les exemples ci-dessous pour voir GRADIENT en action.',
+      highlight: '#controls'
+    },
+    {
+      icon: '🎨',
+      title: 'Utiliser la loupe',
+      description: 'Survole l\'image convertie pour voir les valeurs graphite en temps réel. La loupe affiche le crayon exact à utiliser (9H à 9B) pour chaque zone.',
+      highlight: '#canvas-area'
+    },
+    {
+      icon: '💾',
+      title: 'Exporter ton travail',
+      description: 'Exporte en PNG ou PDF avec la grille et les valeurs. Parfait pour imprimer ou garder comme référence. Utilise aussi les raccourcis clavier (?) pour aller plus vite!',
+      highlight: '.actions'
+    }
+  ],
+
+  init() {
+    const hasSeenTutorial = localStorage.getItem('gradient_tutorial_seen');
+    if (hasSeenTutorial) return;
+
+    // Attendre que le loading screen disparaisse
+    setTimeout(() => {
+      this.show();
+    }, 1800);
+  },
+
+  show() {
+    const overlay = document.getElementById('tutorial-overlay');
+    if (!overlay) return;
+
+    overlay.removeAttribute('hidden');
+    this.currentStep = 0;
+    this.render();
+    this.attachEventListeners();
+  },
+
+  hide() {
+    const overlay = document.getElementById('tutorial-overlay');
+    if (overlay) {
+      overlay.style.animation = 'fadeOut 0.3s ease';
+      setTimeout(() => {
+        overlay.setAttribute('hidden', '');
+        overlay.style.animation = '';
+      }, 300);
+    }
+    this.removeHighlights();
+    localStorage.setItem('gradient_tutorial_seen', 'true');
+  },
+
+  render() {
+    const step = this.steps[this.currentStep];
+    if (!step) return;
+
+    document.getElementById('tutorial-step-num').textContent = this.currentStep + 1;
+    document.querySelector('.step-total').textContent = this.steps.length;
+    document.getElementById('tutorial-icon').textContent = step.icon;
+    document.getElementById('tutorial-title').textContent = step.title;
+    document.getElementById('tutorial-description').textContent = step.description;
+
+    // Boutons navigation
+    const prevBtn = document.getElementById('tutorial-prev');
+    const nextBtn = document.getElementById('tutorial-next');
+
+    if (this.currentStep === 0) {
+      prevBtn.setAttribute('hidden', '');
+    } else {
+      prevBtn.removeAttribute('hidden');
+    }
+
+    if (this.currentStep === this.steps.length - 1) {
+      nextBtn.textContent = 'Commencer';
+    } else {
+      nextBtn.textContent = 'Suivant';
+    }
+
+    // Highlight element if specified
+    this.removeHighlights();
+    if (step.highlight) {
+      const element = document.querySelector(step.highlight);
+      if (element) {
+        element.classList.add('tutorial-highlight');
+      }
+    }
+  },
+
+  removeHighlights() {
+    document.querySelectorAll('.tutorial-highlight').forEach(el => {
+      el.classList.remove('tutorial-highlight');
+    });
+  },
+
+  next() {
+    if (this.currentStep < this.steps.length - 1) {
+      this.currentStep++;
+      this.render();
+    } else {
+      this.hide();
+    }
+  },
+
+  prev() {
+    if (this.currentStep > 0) {
+      this.currentStep--;
+      this.render();
+    }
+  },
+
+  attachEventListeners() {
+    document.getElementById('tutorial-next').onclick = () => this.next();
+    document.getElementById('tutorial-prev').onclick = () => this.prev();
+    document.getElementById('tutorial-skip').onclick = () => this.hide();
+    document.getElementById('tutorial-backdrop').onclick = () => this.hide();
+
+    // Keyboard navigation
+    const keyHandler = (e) => {
+      if (!document.getElementById('tutorial-overlay').hasAttribute('hidden')) {
+        if (e.key === 'ArrowRight' || e.key === 'Enter') {
+          this.next();
+        } else if (e.key === 'ArrowLeft') {
+          this.prev();
+        } else if (e.key === 'Escape') {
+          this.hide();
+        }
+      }
+    };
+    document.addEventListener('keydown', keyHandler);
+  }
+};
+
+// Initialize tutorial on page load (after loading screen)
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    TutorialSystem.init();
+  }, 1500);
+});

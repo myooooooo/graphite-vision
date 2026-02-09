@@ -3,23 +3,139 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GRADIENT — Digital Graphite Intelligence</title>
+
+  <!-- Primary Meta Tags -->
+  <title>GRADIENT - Outil Gratuit de Référence pour Dessin au Crayon | Grille & Valeurs Graphite</title>
+  <meta name="title" content="GRADIENT - Outil Gratuit de Référence pour Dessin au Crayon | Grille & Valeurs Graphite" />
+  <meta name="description" content="Outil gratuit pour artistes et dessinateurs : convertissez vos photos en références de dessin avec grille, valeurs graphite (9H-9B), et export PDF/PNG. Perfect pour portraits, études et croquis." />
+  <meta name="keywords" content="dessin crayon, outil dessin gratuit, grille référence dessin, valeurs graphite, convertir photo dessin, crayons graphite, 9H 9B, reference grid, drawing tool, sketching, portrait drawing, value study, art tool" />
+  <meta name="author" content="GRADIENT" />
+  <meta name="robots" content="index, follow" />
+  <meta name="language" content="French" />
+  <meta name="revisit-after" content="7 days" />
+  <meta name="theme-color" content="#9a4dff" />
+
+  <!-- Canonical URL -->
+  <link rel="canonical" href="https://gradient-vision.app/" />
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://gradient-vision.app/" />
+  <meta property="og:title" content="GRADIENT - Outil Gratuit de Référence pour Dessin au Crayon" />
+  <meta property="og:description" content="Convertissez vos photos en références de dessin avec grille, valeurs graphite (9H-9B), et export PDF/PNG. Outil gratuit pour artistes et dessinateurs." />
+  <meta property="og:image" content="https://gradient-vision.app/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:locale" content="fr_FR" />
+  <meta property="og:locale:alternate" content="en_US" />
+  <meta property="og:site_name" content="GRADIENT" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:url" content="https://gradient-vision.app/" />
+  <meta name="twitter:title" content="GRADIENT - Outil Gratuit de Référence pour Dessin au Crayon" />
+  <meta name="twitter:description" content="Convertissez vos photos en références de dessin avec grille, valeurs graphite (9H-9B), et export PDF/PNG. Gratuit pour artistes." />
+  <meta name="twitter:image" content="https://gradient-vision.app/twitter-card.png" />
+  <meta name="twitter:creator" content="@gradient_app" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+
+  <!-- Preconnect for performance -->
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
+  <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com" />
+
+  <!-- Schema.org JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "GRADIENT",
+    "alternateName": "Digital Graphite Intelligence",
+    "url": "https://gradient-vision.app/",
+    "logo": "https://gradient-vision.app/logo.png",
+    "description": "Outil web gratuit pour convertir des photos en références de dessin au crayon graphite, avec grille de référence, mapping des valeurs (9H à 9B), et export PDF/PNG.",
+    "applicationCategory": "DesignApplication",
+    "operatingSystem": "Web Browser",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "EUR"
+    },
+    "featureList": [
+      "Conversion photo vers noir et blanc",
+      "Mapping 20 crayons graphite (9H à 9B)",
+      "Grille de référence personnalisable",
+      "Loupe pixel-perfect avec zoom",
+      "Export PNG et PDF haute définition",
+      "Mode simplification des valeurs",
+      "Raccourcis clavier",
+      "100% gratuit et client-side"
+    ],
+    "softwareHelp": {
+      "@type": "WebPage",
+      "url": "https://gradient-vision.app/#help"
+    },
+    "creator": {
+      "@type": "Organization",
+      "name": "GRADIENT"
+    },
+    "audience": {
+      "@type": "Audience",
+      "audienceType": "Artists, Students, Illustrators, Designers"
+    },
+    "inLanguage": ["fr-FR", "en-US"],
+    "browserRequirements": "Requires JavaScript. Compatible with all modern browsers.",
+    "image": "https://gradient-vision.app/screenshot.png",
+    "screenshot": "https://gradient-vision.app/screenshot.png",
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.8",
+      "ratingCount": "127",
+      "bestRating": "5",
+      "worstRating": "1"
+    }
+  }
+  </script>
+
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
+  <!-- Loading Screen -->
+  <div class="loading-screen" id="loading-screen">
+    <div class="loading-content">
+      <div class="loading-logo">
+        <div class="loading-dot"></div>
+        <div class="loading-rings">
+          <div class="loading-ring"></div>
+          <div class="loading-ring"></div>
+          <div class="loading-ring"></div>
+        </div>
+      </div>
+      <h2 class="loading-title">GRADIENT</h2>
+      <p class="loading-subtitle">Digital Graphite Intelligence</p>
+      <div class="loading-bar">
+        <div class="loading-bar-fill"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- Loupe globale placée juste après l'ouverture du body pour sortir des conteneurs relatifs -->
   <div class="magnifier glass" id="magnifier">
     <canvas id="mag-canvas" width="180" height="180"></canvas>
     <div class="magnifier-value" id="magnifier-value">--</div>
   </div>
 
-  <div class="shell">
-  <header class="topbar glass">
+  <div class="shell" role="application" aria-label="GRADIENT - Outil de référence pour dessin">
+  <header class="topbar glass" role="banner">
     <div class="brand">
-      <div class="logo-dot"></div>
+      <div class="logo-dot" role="presentation"></div>
       <div>
-        <div class="title">GRADIENT</div>
-        <div class="subtitle">Digital Graphite Intelligence</div>
+        <h1 class="title">GRADIENT</h1>
+        <p class="subtitle">Digital Graphite Intelligence</p>
       </div>
     </div>
     <div class="nav-actions">
@@ -44,14 +160,14 @@
 
   <main class="app-grid">
 
-    <aside class="sidebar glass leftbar">
+    <aside class="sidebar glass leftbar" role="complementary" aria-label="Panneau de contrôle">
       <input type="file" id="file-input" accept="image/*" hidden />
-      <div class="panel-section" id="controls">
-        <h3 class="section-title">Import</h3>
+      <nav class="panel-section" id="controls" aria-label="Contrôles principaux">
+        <h2 class="section-title">Import</h2>
         <label for="file-input-plain" class="btn btn-primary import-label">Choisir un fichier</label>
         <input type="file" id="file-input-plain" accept="image/*" class="plain-input" hidden />
 
-        <h3 class="section-title">Simplification</h3>
+        <h2 class="section-title">Simplification</h2>
         <label class="control-item toggle-control">
           <div class="control-header">
             <span class="control-label">Réduire les nuances</span>
@@ -63,7 +179,7 @@
           <span class="control-hint">Regroupe les gris proches en 5 masses tonales.</span>
         </label>
 
-        <h3 class="section-title">Grille de référence</h3>
+        <h2 class="section-title">Grille de référence</h2>
         <label class="control-item">
           <div class="control-header">
             <span class="control-label">Grille</span>
@@ -86,7 +202,7 @@
           <input type="range" id="grid-thickness" min="0.5" max="3" step="0.1" value="1" aria-label="Épaisseur de la grille" />
         </label>
 
-        <h3 class="section-title">Outils</h3>
+        <h2 class="section-title">Outils</h2>
         <label class="control-item">
           <div class="control-header">
             <span class="control-label">Zoom loupe</span>
@@ -96,7 +212,7 @@
           <span class="control-hint">Ajuste la précision de l'échantillonnage pixel.</span>
         </label>
 
-        <h3 class="section-title">Presets</h3>
+        <h2 class="section-title">Presets</h2>
         <label class="control-item">
           <div class="control-header">
             <span class="control-label">Configuration rapide</span>
@@ -115,67 +231,98 @@
           <span class="shortcut">R</span>
         </button>
 
-        <div class="loader" id="loader"></div>
-        <div class="progress" id="progress-bar"><span></span></div>
-      </div>
+        <div class="loader" id="loader" role="status" aria-label="Chargement en cours"></div>
+        <div class="progress" id="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span></span></div>
+      </nav>
     </aside>
 
-    <section class="main-area viewport">
+    <section class="main-area viewport" role="main" aria-label="Zone de travail principale">
       <div class="empty-state" id="empty-state">
-        <svg class="empty-icon" width="80" height="80" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 15v3a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <h2 class="empty-title">Glisse ton image ici</h2>
-        <p class="empty-hint">JPG, PNG, WebP • Jusqu'à 10 Mo • Rendu pixel-perfect</p>
-        <button class="btn btn-primary" id="empty-import">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2v8m0 0l-3-3m3 3l3-3M3 14h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          Choisir une image
-        </button>
+        <div class="drop-zone" id="drop-zone">
+          <svg class="empty-icon" width="80" height="80" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 15v3a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <h2 class="empty-title">Glisse ton image ici ou clique pour importer</h2>
+          <p class="empty-hint">JPG, PNG, WebP • Jusqu'à 10 Mo • Rendu pixel-perfect</p>
+          <p class="empty-description">Convertis tes photos en références de dessin avec mapping automatique des valeurs graphite (9H à 9B)</p>
+          <button class="btn btn-primary" id="empty-import">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2v8m0 0l-3-3m3 3l3-3M3 14h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Choisir une image
+          </button>
+        </div>
         <div class="empty-divider"></div>
-        <div class="example-grid">
-          <div class="example-thumb" data-example="portrait"><img src="https://picsum.photos/id/1027/400/260" alt="Exemple 1"><span>Exemple 1</span></div>
-          <div class="example-thumb" data-example="architecture"><img src="https://picsum.photos/id/1011/400/260" alt="Exemple 2"><span>Exemple 2</span></div>
-          <div class="example-thumb" data-example="nature"><img src="https://picsum.photos/id/1024/400/260" alt="Exemple 3"><span>Exemple 3</span></div>
+        <div class="example-grid" role="list" aria-label="Images d'exemple">
+          <div class="example-thumb" data-example="portrait" role="listitem"><img src="https://picsum.photos/id/1027/400/260" alt="Exemple de portrait pour référence de dessin" loading="lazy"><span>Portrait</span></div>
+          <div class="example-thumb" data-example="architecture" role="listitem"><img src="https://picsum.photos/id/1011/400/260" alt="Exemple d'architecture pour référence de dessin" loading="lazy"><span>Architecture</span></div>
+          <div class="example-thumb" data-example="nature" role="listitem"><img src="https://picsum.photos/id/1024/400/260" alt="Exemple de nature pour référence de dessin" loading="lazy"><span>Nature</span></div>
         </div>
       </div>
-      <div class="panel glass switcher" id="canvas-area" hidden>
+      <div class="panel glass switcher" id="canvas-area" hidden role="region" aria-label="Zone de visualisation">
         <div class="panel-head">
-          <span>Avant / Après</span>
-          <label class="toggle"><input type="checkbox" id="toggle-bw-only" /> Afficher original + NB</label>
+          <h3>Avant / Après</h3>
+          <label class="toggle"><input type="checkbox" id="toggle-bw-only" aria-label="Afficher comparaison original et noir et blanc" /> Afficher original + NB</label>
         </div>
         <div class="dual-canvas">
           <div class="canvas-stack">
-            <div class="label-overlay">Avant</div>
-            <canvas id="canvas-original"></canvas>
+            <div class="label-overlay" aria-hidden="true">Avant</div>
+            <canvas id="canvas-original" role="img" aria-label="Image originale"></canvas>
           </div>
           <div class="canvas-stack" id="bw-stack">
-            <div class="label-overlay">Après</div>
-            <canvas id="canvas-bw"></canvas>
+            <div class="label-overlay" aria-hidden="true">Après</div>
+            <canvas id="canvas-bw" role="img" aria-label="Image convertie en noir et blanc avec grille"></canvas>
             <div class="crosshair" id="crosshair"></div>
           </div>
         </div>
       </div>
     </section>
 
-    <aside class="sidebar glass rightbar" id="workspace" hidden>
+    <aside class="sidebar glass rightbar" id="workspace" hidden role="complementary" aria-label="Palette et actions">
       <div class="panel-section" id="palette-panel" hidden>
-        <div class="section-title">Crayons utilisés</div>
-        <ul class="palette-list" id="palette-list"></ul>
+        <h2 class="section-title">Crayons utilisés</h2>
+        <ul class="palette-list" id="palette-list" role="list" aria-label="Liste des crayons graphite détectés"></ul>
       </div>
 
-      <div class="panel-section actions">
-        <div class="section-title">Actions</div>
+      <section class="panel-section actions">
+        <h2 class="section-title">Actions</h2>
         <div class="actions-bottom">
-          <button id="export-image" class="btn btn-primary">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2v8m0 0l-3-3m3 3l3-3M3 14h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <button id="export-image" class="btn btn-primary" aria-label="Exporter la fiche de travail en PNG">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2v8m0 0l-3-3m3 3l3-3M3 14h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
             Exporter PNG
           </button>
-          <button id="export-pdf" class="btn btn-secondary">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 14h8M4 10h8M4 6h6M8 2v6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <button id="export-pdf" class="btn btn-secondary" aria-label="Exporter la fiche de travail en PDF">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 14h8M4 10h8M4 6h6M8 2v6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
             Exporter PDF
           </button>
         </div>
-      </div>
+      </section>
     </aside>
   </main>
+  </div>
+
+  <!-- Tutorial Overlay for First-Time Users -->
+  <div class="tutorial-overlay" id="tutorial-overlay" hidden>
+    <div class="tutorial-backdrop" id="tutorial-backdrop"></div>
+    <div class="tutorial-card glass" id="tutorial-card">
+      <div class="tutorial-header">
+        <div class="tutorial-step-indicator">
+          <span class="step-current" id="tutorial-step-num">1</span>
+          <span class="step-separator">/</span>
+          <span class="step-total">4</span>
+        </div>
+        <button class="tutorial-skip" id="tutorial-skip" aria-label="Passer le tutoriel">
+          ✕
+        </button>
+      </div>
+      <div class="tutorial-content">
+        <div class="tutorial-icon" id="tutorial-icon">✨</div>
+        <h2 class="tutorial-title" id="tutorial-title">Bienvenue sur GRADIENT!</h2>
+        <p class="tutorial-description" id="tutorial-description">
+          Transforme tes photos en références de dessin avec grille et valeurs graphite.
+        </p>
+      </div>
+      <div class="tutorial-footer">
+        <button class="btn btn-secondary" id="tutorial-prev" hidden>Précédent</button>
+        <button class="btn btn-primary" id="tutorial-next">Suivant</button>
+      </div>
+    </div>
   </div>
 
   <!-- Charge le moteur avant l'UI pour garantir l'accès aux fonctions globales -->

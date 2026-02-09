@@ -57,9 +57,9 @@ const debugPanel = null;
 const toggleDebugBtn = null;
 const debugLoadBtn = null;
 const logDebug = (...args) => console.log(...args);
-// Forcer l'affichage des panneaux pour le debug
-if (workspace) workspace.hidden = false;
-if (canvasArea) canvasArea.hidden = false;
+// Production mode: panneaux masqués par défaut jusqu'à l'import d'image
+if (workspace) workspace.hidden = true;
+if (canvasArea) canvasArea.hidden = true;
 
 const ctxOrig = canvasOriginal.getContext('2d');
 const ctxBW = canvasBW.getContext('2d');
@@ -111,9 +111,6 @@ if (toggleDebugBtn && debugPanel) {
     if (next) updateDebugPanel();
   });
 }
-// Forcer l'affichage debug pour cette phase de test
-if (workspace) workspace.hidden = true;
-if (canvasArea) canvasArea.hidden = true;
 if (fileInputPlain) {
   fileInputPlain.addEventListener('change', e => {
     const file = e.target.files[0];
@@ -634,6 +631,13 @@ exportPdfBtn.addEventListener('click', async () => {
 
   try {
     showToast('Génération du PDF...');
+
+    // Vérifier que jsPDF est chargé
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+      showToast('❌ Erreur: bibliothèque PDF non chargée');
+      console.error('jsPDF n\'est pas disponible');
+      return;
+    }
 
     // Initialiser jsPDF
     const { jsPDF } = window.jspdf;

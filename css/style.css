@@ -124,7 +124,7 @@ a { color: var(--accent); text-decoration: none; }
 .control-item { display: flex; flex-direction: column; gap: 6px; width: 100%; }
 .control-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .control-label { font-size: 14px; font-weight: 600; color: var(--text); }
-.control-hint { font-size: 12px; color: var(--text); margin-top: 2px; }
+.control-hint { font-size: 12px; color: var(--muted); margin-top: 2px; }
 .control-value { font-size: 13px; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
 
 label.pill.toggle { display: flex; flex-direction: column; gap: 8px; width: 100%; color: var(--text); font-size: 13px; }
@@ -221,10 +221,29 @@ input[type="color"] {
   background: rgba(255,255,255,0.02);
   box-shadow: var(--shadow);
 }
+.drop-zone {
+  padding: 24px;
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  background: rgba(255,255,255,0.03);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.drop-zone:hover {
+  border-color: var(--accent);
+  background: rgba(154, 77, 255, 0.05);
+  transform: translateY(-2px);
+}
+.drop-zone.dragging {
+  border-color: var(--accent);
+  background: rgba(154, 77, 255, 0.1);
+  border-style: solid;
+}
 .empty-icon { opacity: 0.85; margin-bottom: 8px; }
 .empty-title { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
-.empty-hint { font-size: 13px; color: var(--text-secondary); margin-bottom: 14px; }
-.empty-divider { margin: 18px auto 12px; width: 100%; max-width: 320px; height: 1px; background: var(--border); position: relative; }
+.empty-hint { font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; }
+.empty-description { font-size: 12px; color: var(--muted); margin-bottom: 16px; max-width: 420px; margin-left: auto; margin-right: auto; line-height: 1.6; }
+.empty-divider { margin: 24px auto 12px; width: 100%; max-width: 320px; height: 1px; background: var(--border); position: relative; }
 .empty-divider::after { content: "ou"; position: absolute; left: 50%; top: -10px; transform: translateX(-50%); background: var(--panel); padding: 0 10px; color: var(--text-secondary); font-size: 12px; }
 .example-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-top: 10px; }
 .example-thumb { border-radius: 10px; overflow: hidden; position: relative; cursor: pointer; border: 1px solid var(--border); }

@@ -219,13 +219,16 @@
 
     <section class="main-area viewport" role="main" aria-label="Zone de travail principale">
       <div class="empty-state" id="empty-state">
-        <svg class="empty-icon" width="80" height="80" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 15v3a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <h2 class="empty-title">Importe ton image pour commencer</h2>
-        <p class="empty-hint">JPG, PNG, WebP • Jusqu'à 10 Mo • Rendu pixel-perfect</p>
-        <button class="btn btn-primary" id="empty-import">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2v8m0 0l-3-3m3 3l3-3M3 14h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          Choisir une image
-        </button>
+        <div class="drop-zone" id="drop-zone">
+          <svg class="empty-icon" width="80" height="80" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 15v3a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <h2 class="empty-title">Glisse ton image ici ou clique pour importer</h2>
+          <p class="empty-hint">JPG, PNG, WebP • Jusqu'à 10 Mo • Rendu pixel-perfect</p>
+          <p class="empty-description">Convertis tes photos en références de dessin avec mapping automatique des valeurs graphite (9H à 9B)</p>
+          <button class="btn btn-primary" id="empty-import">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2v8m0 0l-3-3m3 3l3-3M3 14h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Choisir une image
+          </button>
+        </div>
         <div class="empty-divider"></div>
         <div class="example-grid" role="list" aria-label="Images d'exemple">
           <div class="example-thumb" data-example="portrait" role="listitem"><img src="https://picsum.photos/id/1027/400/260" alt="Exemple de portrait pour référence de dessin" loading="lazy"><span>Portrait</span></div>

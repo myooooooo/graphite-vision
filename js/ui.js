@@ -38,6 +38,8 @@ const gridThicknessValue = document.getElementById('grid-thickness-value');
 const zoomSlider = document.getElementById('zoom-slider');
 const zoomValue = document.getElementById('zoom-value');
 const presetSelector = document.getElementById('preset-selector');
+const resetSettingsBtn = document.getElementById('reset-settings');
+const helpBtn = document.getElementById('help-btn');
 const palettePanel = document.getElementById('palette-panel');
 const paletteList = document.getElementById('palette-list');
 const progressBar = document.getElementById('progress-bar');
@@ -50,6 +52,7 @@ const emptyState = document.getElementById('empty-state');
 const loader = document.getElementById('loader');
 const exampleGrid = document.querySelector('.example-grid');
 const btnTestPattern = document.getElementById('btn-test-pattern');
+const exportPdfBtn = document.getElementById('export-pdf');
 const debugPanel = null;
 const toggleDebugBtn = null;
 const debugLoadBtn = null;
@@ -140,6 +143,19 @@ if (presetSelector) {
   });
 }
 
+if (resetSettingsBtn) {
+  resetSettingsBtn.addEventListener('click', () => {
+    resetSettings();
+    showToast('✅ Réglages réinitialisés');
+  });
+}
+
+if (helpBtn) {
+  helpBtn.addEventListener('click', () => {
+    showKeyboardShortcuts();
+  });
+}
+
 function savePalette() { try { localStorage.setItem('gradient_palette', JSON.stringify(Array.from(paletteSet.entries()))); } catch (_) {} }
 function resetPalette(clearStorage = true) {
   paletteSet.clear();
@@ -147,6 +163,65 @@ function resetPalette(clearStorage = true) {
   palettePanel.hidden = true;
   if (clearStorage) try { localStorage.removeItem('gradient_palette'); } catch (_) {}
 }
+
+// Sauvegarde et chargement des préférences utilisateur
+function savePreferences() {
+  const prefs = {
+    gridDivisions,
+    gridColor,
+    gridThickness,
+    posterizeOn,
+    zoomLevel
+  };
+  try {
+    localStorage.setItem('gradient_preferences', JSON.stringify(prefs));
+  } catch (_) {}
+}
+
+function loadPreferences() {
+  try {
+    const saved = localStorage.getItem('gradient_preferences');
+    if (saved) {
+      const prefs = JSON.parse(saved);
+
+      // Appliquer les préférences sauvegardées
+      if (prefs.gridDivisions !== undefined) {
+        gridDivisions = prefs.gridDivisions;
+        if (gridSlider) gridSlider.value = gridDivisions;
+        if (gridValue) gridValue.textContent = gridDivisions ? `${gridDivisions}×${gridDivisions}` : 'Désactivée';
+      }
+
+      if (prefs.gridColor !== undefined) {
+        gridColor = prefs.gridColor;
+        if (gridColorInput) gridColorInput.value = gridColor;
+      }
+
+      if (prefs.gridThickness !== undefined) {
+        gridThickness = prefs.gridThickness;
+        if (gridThicknessInput) gridThicknessInput.value = gridThickness;
+        if (gridThicknessValue) gridThicknessValue.textContent = `${gridThickness}px`;
+      }
+
+      if (prefs.posterizeOn !== undefined) {
+        posterizeOn = prefs.posterizeOn;
+        if (togglePosterize) togglePosterize.checked = posterizeOn;
+      }
+
+      if (prefs.zoomLevel !== undefined) {
+        zoomLevel = prefs.zoomLevel;
+        if (zoomSlider) zoomSlider.value = zoomLevel;
+        if (zoomValue) zoomValue.textContent = `${zoomLevel.toFixed(1)}×`;
+      }
+
+      logDebug('[GRADIENT] Préférences chargées');
+    }
+  } catch (err) {
+    logDebug('[GRADIENT] Erreur chargement préférences:', err);
+  }
+}
+
+// Charger les préférences au démarrage
+loadPreferences();
 resetPalette(false); // démarrage sans pré-remplissage
 gridThicknessValue.textContent = `${gridThickness}px`;
 if (zoomValue) zoomValue.textContent = `${zoomLevel.toFixed(1)}×`;
@@ -434,32 +509,34 @@ togglePosterize.addEventListener('change', e => {
   posterizeOn = e.target.checked;
   clearTimeout(gridTimeout);
   gridTimeout = setTimeout(() => renderBWView(), 100);
+  savePreferences();
 });
 
 gridSlider.addEventListener('input', e => {
   gridDivisions = parseInt(e.target.value, 10) || 0;
   gridValue.textContent = gridDivisions ? `${gridDivisions}×${gridDivisions}` : 'Désactivée';
   clearTimeout(gridTimeout);
-  gridTimeout = setTimeout(() => renderBWView(), 100);
+  gridTimeout = setTimeout(() => { renderBWView(); savePreferences(); }, 100);
 });
 
 gridColorInput.addEventListener('input', e => {
   gridColor = e.target.value || '#8A22BE';
   clearTimeout(colorTimeout);
-  colorTimeout = setTimeout(() => renderBWView(), 100);
+  colorTimeout = setTimeout(() => { renderBWView(); savePreferences(); }, 100);
 });
 
 gridThicknessInput.addEventListener('input', e => {
   gridThickness = parseFloat(e.target.value) || 1;
   gridThicknessValue.textContent = `${gridThickness}px`;
   clearTimeout(thicknessTimeout);
-  thicknessTimeout = setTimeout(() => renderBWView(), 100);
+  thicknessTimeout = setTimeout(() => { renderBWView(); savePreferences(); }, 100);
 });
 
 if (zoomSlider) {
   zoomSlider.addEventListener('input', e => {
     zoomLevel = parseFloat(e.target.value) || 4;
     if (zoomValue) zoomValue.textContent = `${zoomLevel.toFixed(1)}×`;
+    savePreferences();
     // Prévisualisation immédiate : si un point est déjà survolé, on rafraîchit la loupe.
     // Sinon, on prend le centre de l'image comme aperçu si elle est chargée.
     if (!lastHover && graySnapshot) {
@@ -552,6 +629,105 @@ exportImageBtn.addEventListener('click', async () => {
   }, 'image/png');
 });
 
+exportPdfBtn.addEventListener('click', async () => {
+  if (!graySnapshot) { showToast('❌ Charge une image avant d'exporter.'); return; }
+
+  try {
+    showToast('Génération du PDF...');
+
+    // Initialiser jsPDF
+    const { jsPDF } = window.jspdf;
+    const w = canvasBW.width;
+    const h = canvasBW.height;
+
+    // Créer un canvas temporaire pour l'export
+    const tempCanvas = document.createElement('canvas');
+    const legendWidth = 200;
+    tempCanvas.width = w + legendWidth + 32;
+    tempCanvas.height = h;
+    const tctx = tempCanvas.getContext('2d');
+    tctx.imageSmoothingEnabled = false;
+
+    // Dessiner l'image traitée
+    const dataToDraw = posterizeOn ? posterize5Levels(graySnapshot) : graySnapshot;
+    tctx.putImageData(dataToDraw, 0, 0);
+
+    // Dessiner la grille si active
+    if (gridDivisions > 0) {
+      tctx.save();
+      tctx.strokeStyle = gridColor;
+      tctx.lineWidth = gridThickness;
+      tctx.font = '12px Inter, sans-serif';
+      tctx.fillStyle = 'rgba(243,239,255,0.85)';
+      const stepX = w / gridDivisions;
+      const stepY = h / gridDivisions;
+      const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      for (let i = 1; i < gridDivisions; i++) {
+        const x = stepX * i;
+        tctx.beginPath();
+        tctx.moveTo(x, 0);
+        tctx.lineTo(x, h);
+        tctx.stroke();
+        tctx.fillText(String(i + 1), x + 4, 14);
+      }
+      for (let j = 1; j < gridDivisions; j++) {
+        const y = stepY * j;
+        tctx.beginPath();
+        tctx.moveTo(0, y);
+        tctx.lineTo(w, y);
+        tctx.stroke();
+        tctx.fillText(letters[j] || j + 1, 6, y - 4);
+      }
+      tctx.restore();
+    }
+
+    // Ajouter la légende
+    const pencils = Array.from(paletteSet.entries()).sort((a, b) => a[1] - b[1]);
+    const legend = pencils.length ? pencils : DARWIN_PENCILS.map((p, idx) => [p, Math.round((idx / (DARWIN_PENCILS.length - 1)) * 255)]);
+    const legendX = w + 16;
+
+    tctx.save();
+    tctx.fillStyle = 'rgba(20,15,34,0.92)';
+    tctx.fillRect(w, 0, legendWidth, h);
+    tctx.strokeStyle = 'rgba(147,112,219,0.35)';
+    tctx.strokeRect(w + 0.5, 0.5, legendWidth - 1, h - 1);
+    tctx.font = '14px Inter, sans-serif';
+    tctx.fillStyle = '#f3efff';
+    tctx.fillText('Teintes / Grille', legendX, 24);
+
+    legend.forEach(([p, g], idx) => {
+      const y = 52 + idx * 26;
+      const gray = g ?? Math.round((DARWIN_PENCILS.indexOf(p) / (DARWIN_PENCILS.length - 1)) * 255);
+      tctx.fillStyle = `rgb(${gray},${gray},${gray})`;
+      tctx.fillRect(legendX, y - 12, 28, 18);
+      tctx.strokeStyle = 'rgba(147,112,219,0.4)';
+      tctx.strokeRect(legendX, y - 12, 28, 18);
+      tctx.fillStyle = '#f3efff';
+      tctx.fillText(p, legendX + 38, y + 2);
+    });
+    tctx.restore();
+
+    // Déterminer l'orientation et les dimensions du PDF
+    const pdfOrientation = tempCanvas.width > tempCanvas.height ? 'landscape' : 'portrait';
+    const pdf = new jsPDF({
+      orientation: pdfOrientation,
+      unit: 'px',
+      format: [tempCanvas.width, tempCanvas.height]
+    });
+
+    // Ajouter l'image au PDF
+    const imgData = tempCanvas.toDataURL('image/png');
+    pdf.addImage(imgData, 'PNG', 0, 0, tempCanvas.width, tempCanvas.height);
+
+    // Télécharger le PDF
+    pdf.save('gradient-fiche.pdf');
+    showToast('✅ PDF exporté avec succès');
+  } catch (error) {
+    console.error('Erreur export PDF:', error);
+    showToast('❌ Erreur lors de l\'export PDF');
+  }
+});
+
 function showToast(msg) {
   let toast = document.getElementById(successToastId);
   if (!toast) {
@@ -615,4 +791,219 @@ function applyPreset(key) {
   clearTimeout(gridTimeout);
   gridTimeout = setTimeout(() => renderBWView(), 50);
   updateDebugPanel();
+}
+
+// Raccourcis clavier
+document.addEventListener('keydown', (e) => {
+  // Ignorer si on est dans un input ou textarea
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+    return;
+  }
+
+  const key = e.key.toLowerCase();
+
+  switch(key) {
+    case 'e':
+      if (exportImageBtn) {
+        e.preventDefault();
+        exportImageBtn.click();
+        showToast('⌨️ Export PNG (E)');
+      }
+      break;
+    case 'p':
+      if (exportPdfBtn) {
+        e.preventDefault();
+        exportPdfBtn.click();
+      }
+      break;
+    case 'i':
+      e.preventDefault();
+      openFileDialog();
+      showToast('⌨️ Import image (I)');
+      break;
+    case 'g':
+      e.preventDefault();
+      if (gridSlider) {
+        const newValue = gridDivisions === 0 ? 4 : 0;
+        gridSlider.value = newValue;
+        gridDivisions = newValue;
+        gridValue.textContent = newValue ? `${newValue}×${newValue}` : 'Désactivée';
+        renderBWView();
+        showToast(`⌨️ Grille ${newValue ? 'activée' : 'désactivée'} (G)`);
+      }
+      break;
+    case 's':
+      e.preventDefault();
+      if (togglePosterize) {
+        togglePosterize.checked = !togglePosterize.checked;
+        posterizeOn = togglePosterize.checked;
+        renderBWView();
+        showToast(`⌨️ Simplification ${posterizeOn ? 'activée' : 'désactivée'} (S)`);
+      }
+      break;
+    case 'r':
+      e.preventDefault();
+      resetSettings();
+      showToast('⌨️ Réglages réinitialisés (R)');
+      break;
+    case '?':
+    case 'h':
+      e.preventDefault();
+      showKeyboardShortcuts();
+      break;
+  }
+});
+
+function resetSettings() {
+  // Réinitialiser tous les réglages aux valeurs par défaut
+  if (gridSlider) {
+    gridSlider.value = 0;
+    gridDivisions = 0;
+    gridValue.textContent = 'Désactivée';
+  }
+  if (gridColorInput) {
+    gridColorInput.value = '#8A22BE';
+    gridColor = '#8A22BE';
+  }
+  if (gridThicknessInput) {
+    gridThicknessInput.value = 1;
+    gridThickness = 1;
+    gridThicknessValue.textContent = '1px';
+  }
+  if (togglePosterize) {
+    togglePosterize.checked = false;
+    posterizeOn = false;
+  }
+  if (zoomSlider) {
+    zoomSlider.value = 4;
+    zoomLevel = 4;
+    if (zoomValue) zoomValue.textContent = '4.0×';
+  }
+  if (presetSelector) {
+    presetSelector.value = '';
+  }
+  renderBWView();
+  savePreferences();
+}
+
+function showKeyboardShortcuts() {
+  const shortcuts = [
+    { key: 'I', desc: 'Importer une image' },
+    { key: 'E', desc: 'Exporter PNG' },
+    { key: 'P', desc: 'Exporter PDF' },
+    { key: 'G', desc: 'Activer/désactiver la grille' },
+    { key: 'S', desc: 'Activer/désactiver la simplification' },
+    { key: 'R', desc: 'Réinitialiser les réglages' },
+    { key: '? ou H', desc: 'Afficher cette aide' }
+  ];
+
+  const msg = shortcuts.map(s => `${s.key} : ${s.desc}`).join('\n');
+
+  // Créer une modal pour les raccourcis
+  let modal = document.getElementById('shortcuts-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'shortcuts-modal';
+    modal.style.cssText = `
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(28, 28, 38, 0.98);
+      border: 1px solid rgba(154, 77, 255, 0.5);
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+      z-index: 100001;
+      max-width: 400px;
+      width: 90%;
+    `;
+
+    const title = document.createElement('h3');
+    title.textContent = 'Raccourcis clavier';
+    title.style.cssText = `
+      margin: 0 0 16px 0;
+      color: #f5f5f7;
+      font-size: 18px;
+      letter-spacing: 0.08em;
+    `;
+
+    const list = document.createElement('div');
+    list.style.cssText = `
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+    `;
+
+    shortcuts.forEach(s => {
+      const row = document.createElement('div');
+      row.style.cssText = `
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 12px;
+        background: rgba(255,255,255,0.03);
+        border-radius: 8px;
+      `;
+
+      const key = document.createElement('kbd');
+      key.textContent = s.key;
+      key.style.cssText = `
+        background: rgba(154, 77, 255, 0.2);
+        color: #9a4dff;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-family: 'SF Mono', 'Courier New', monospace;
+        font-size: 13px;
+        font-weight: 700;
+      `;
+
+      const desc = document.createElement('span');
+      desc.textContent = s.desc;
+      desc.style.cssText = `
+        color: #d4d5e0;
+        font-size: 14px;
+      `;
+
+      row.appendChild(key);
+      row.appendChild(desc);
+      list.appendChild(row);
+    });
+
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = 'Fermer (Échap)';
+    closeBtn.className = 'btn btn-secondary';
+    closeBtn.style.width = '100%';
+    closeBtn.onclick = () => modal.remove();
+
+    modal.appendChild(title);
+    modal.appendChild(list);
+    modal.appendChild(closeBtn);
+
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 100000;
+    `;
+    overlay.onclick = () => { modal.remove(); overlay.remove(); };
+
+    document.body.appendChild(overlay);
+    document.body.appendChild(modal);
+
+    // Fermer avec Échap
+    const escHandler = (e) => {
+      if (e.key === 'Escape') {
+        modal.remove();
+        overlay.remove();
+        document.removeEventListener('keydown', escHandler);
+      }
+    };
+    document.addEventListener('keydown', escHandler);
+  }
 }

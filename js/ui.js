@@ -7,17 +7,14 @@ const {
   drawImageToCanvas,
 } = window.gradientEngine;
 
-// Loading Screen Management
+// Loading Screen Management - Fixed 2 seconds
 window.addEventListener('DOMContentLoaded', () => {
   const loadingScreen = document.getElementById('loading-screen');
   if (!loadingScreen) return;
 
-  const minLoadTime = 1200;
-  const maxLoadTime = 3000; // Fallback maximum
-  const startTime = Date.now();
-
-  const hideLoadingScreen = () => {
-    if (loadingScreen && !loadingScreen.classList.contains('hidden')) {
+  // Hide after exactly 2 seconds
+  setTimeout(() => {
+    if (loadingScreen) {
       loadingScreen.classList.add('hidden');
       setTimeout(() => {
         if (loadingScreen.parentNode) {
@@ -25,16 +22,7 @@ window.addEventListener('DOMContentLoaded', () => {
         }
       }, 500);
     }
-  };
-
-  window.addEventListener('load', () => {
-    const elapsed = Date.now() - startTime;
-    const remaining = Math.max(0, minLoadTime - elapsed);
-    setTimeout(hideLoadingScreen, remaining);
-  });
-
-  // Fallback: force hide after max time
-  setTimeout(hideLoadingScreen, maxLoadTime);
+  }, 2000);
 });
 
 const fileInputPlain = document.getElementById('file-input-plain');

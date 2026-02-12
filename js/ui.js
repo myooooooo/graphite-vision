@@ -643,14 +643,17 @@ exportImageBtn.addEventListener('click', async () => {
 });
 
 exportPdfBtn.addEventListener('click', async () => {
-  if (!graySnapshot) { showToast('❌ Charge une image avant d'exporter.'); return; }
+  if (!graySnapshot) {
+    showToast('Charge une image avant d\'exporter.', 'error');
+    return;
+  }
 
   try {
-    showToast('Génération du PDF...');
+    showToast('Génération du PDF...', 'loading');
 
     // Vérifier que jsPDF est chargé
     if (!window.jspdf || !window.jspdf.jsPDF) {
-      showToast('❌ Erreur: bibliothèque PDF non chargée');
+      showToast('Erreur: bibliothèque PDF non chargée', 'error');
       console.error('jsPDF n\'est pas disponible');
       return;
     }

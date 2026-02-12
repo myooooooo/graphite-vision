@@ -7,23 +7,21 @@ const {
   drawImageToCanvas,
 } = window.gradientEngine;
 
-// Loading Screen Management - Fixed 2 seconds
-window.addEventListener('DOMContentLoaded', () => {
+// Loading Screen Management - Simple 2 seconds
+(() => {
   const loadingScreen = document.getElementById('loading-screen');
   if (!loadingScreen) return;
 
-  // Hide after exactly 2 seconds
+  // Hide after 2 seconds with direct style manipulation
   setTimeout(() => {
-    if (loadingScreen) {
-      loadingScreen.classList.add('hidden');
-      setTimeout(() => {
-        if (loadingScreen.parentNode) {
-          loadingScreen.remove();
-        }
-      }, 500);
-    }
+    loadingScreen.style.transition = 'opacity 0.3s ease';
+    loadingScreen.style.opacity = '0';
+    setTimeout(() => {
+      loadingScreen.style.display = 'none';
+      loadingScreen.remove();
+    }, 300);
   }, 2000);
-});
+})();
 
 const fileInputPlain = document.getElementById('file-input-plain');
 const fileInputHidden = document.getElementById('file-input');

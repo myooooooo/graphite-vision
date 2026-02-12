@@ -54,7 +54,7 @@ export class CanvasRenderer {
       this.ctx.moveTo(0, y);
       this.ctx.lineTo(w, y);
       this.ctx.stroke();
-      this.ctx.fillText(letters[j] || j + 1, 6, y - 4);
+      this.ctx.fillText(letters[j] || String(j + 1), 6, y - 4);
     }
     this.ctx.restore();
   }

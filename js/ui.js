@@ -72,7 +72,6 @@ const exportPdfBtn = document.getElementById('export-pdf');
 const debugPanel = null;
 const toggleDebugBtn = null;
 const debugLoadBtn = null;
-const logDebug = (...args) => console.log(...args);
 // Production mode: panneaux masqués par défaut jusqu'à l'import d'image
 if (workspace) workspace.hidden = true;
 if (canvasArea) canvasArea.hidden = true;
@@ -108,7 +107,6 @@ function openFileDialog() {
   // double déclenchement pour contourner certains blocages (Safari/Chrome)
   fileInput.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
   fileInput.click();
-  logDebug('[GRADIENT] openFileDialog triggered');
 }
 
 if (copyHexBtn) {
@@ -124,19 +122,16 @@ if (toggleDebugBtn && debugPanel) {
     const next = debugPanel.hidden;
     debugPanel.hidden = !next;
     toggleDebugBtn.textContent = next ? 'Mode test (masquer)' : 'Mode test (état)';
-    if (next) updateDebugPanel();
   });
 }
 if (fileInputPlain) {
   fileInputPlain.addEventListener('change', e => {
     const file = e.target.files[0];
-    if (file) { logDebug(`[GRADIENT] plain file selected ${file.name}`); handleFile(file); }
   });
 }
 
 if (btnTestPattern) {
   btnTestPattern.addEventListener('click', () => {
-    logDebug('[GRADIENT] drawing test pattern');
     const w = 400, h = 300;
     canvasBW.width = w; canvasBW.height = h;
     canvasOriginal.width = w; canvasOriginal.height = h;
@@ -146,7 +141,6 @@ if (btnTestPattern) {
     renderBWView();
     workspace.hidden = false; canvasArea.hidden = false; emptyState.style.display = 'none'; statusBar.hidden = false;
     updateStatus(119, 'HB', 0, 0);
-    updateDebugPanel();
   });
 }
 
@@ -226,10 +220,8 @@ function loadPreferences() {
         if (zoomValue) zoomValue.textContent = `${zoomLevel.toFixed(1)}×`;
       }
 
-      logDebug('[GRADIENT] Préférences chargées');
     }
   } catch (err) {
-    logDebug('[GRADIENT] Erreur chargement préférences:', err);
   }
 }
 
@@ -358,8 +350,6 @@ function renderBWView() {
   if (posterizeOn) dataToDraw = posterize5Levels(graySnapshot);
   ctxBW.putImageData(dataToDraw, 0, 0);
   if (gridDivisions > 0) drawGrid(gridDivisions);
-  updateDebugPanel();
-  logDebug(`[GRADIENT] renderBWView done ${canvasBW.width}x${canvasBW.height}`);
 }
 
 if (dropZone) {
@@ -367,7 +357,6 @@ if (dropZone) {
   ['dragleave','drop'].forEach(evt => dropZone.addEventListener(evt, e => {e.preventDefault(); dropZone.classList.remove('dragging');}));
   dropZone.addEventListener('drop', e => { const file = e.dataTransfer.files[0]; if (file) handleFile(file); });
   dropZone.addEventListener('click', () => {
-    logDebug('[GRADIENT] dropZone click');
     openFileDialog();
   });
 }
@@ -410,62 +399,44 @@ if (exampleGrid) {
 }
 fileInput.addEventListener('change', e => {
   const file = e.target.files[0];
-  logDebug('[GRADIENT] input change');
-  if (file) { logDebug(`[GRADIENT] file selected ${file.name}`); showToast(`Fichier détecté : ${file.name}`); handleFile(file); }
-  else { logDebug('[GRADIENT] file selection cancelled'); }
   e.target.value = '';
 });
 
 async function handleFile(file) {
   const MAX_SIZE = 10 * 1024 * 1024;
   const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
-  if (!ALLOWED_TYPES.includes(file.type)) { showToast('❌ Format non supporté (PNG/JPG/WebP uniquement)', 'error'); logDebug('file.type rejection'); return; }
-  if (file.size > MAX_SIZE) { showToast('❌ Fichier trop lourd (max 10 MB)', 'error'); logDebug('file.size rejection'); return; }
   try {
-    logDebug(`[GRADIENT] handleFile start ${file.name} ${file.type} ${file.size}`);
     showToast('Import en cours...', 'loading');
     if (statusMeta) statusMeta.textContent = `Import de ${file.name}...`;
     resetPalette();
     showProgress();
    const img = await loadImageFile(file);
-   logDebug(`[GRADIENT] image loaded ${img.naturalWidth}x${img.naturalHeight}`);
    if (!img.naturalWidth || !img.naturalHeight) throw new Error('Image vide');
-    try { drawImageToCanvas(img, canvasOriginal, ctxOrig); } catch(e){ logDebug('drawImageToCanvas original error '+e); throw e; }
-    try { drawImageToCanvas(img, canvasBW, ctxBW); } catch(e){ logDebug('drawImageToCanvas bw error '+e); throw e; }
-    logDebug(`[GRADIENT] canvas set to ${canvasBW.width}x${canvasBW.height}`);
     try {
       graySnapshot = ctxBW.getImageData(0, 0, canvasBW.width, canvasBW.height);
     } catch (e) {
-      logDebug(`[GRADIENT] getImageData error ${e}`);
       throw e;
     }
-    logDebug(`[GRADIENT] snapshot length ${graySnapshot?.data?.length || 0}`);
     if (!graySnapshot || !graySnapshot.data || !graySnapshot.data.length) throw new Error('Snapshot vide');
     try {
       toGrayscale(graySnapshot);
     } catch (e) {
-      logDebug(`[GRADIENT] toGrayscale error ${e}`);
       throw e;
     }
-    logDebug('[GRADIENT] toGrayscale done');
     renderBWView();
     if (canvasArea) canvasArea.hidden = false;
     if (workspace) workspace.hidden = false;
     if (controls) controls.hidden = false;
     if (emptyState) emptyState.style.display = 'none';
     if (statusBar) statusBar.hidden = false;
-    logDebug('[GRADIENT] UI unhidden');
     toggleBwOnly.checked = false; // NB par défaut
     canvasOriginal.parentElement.style.display = 'none';
     const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
     statusMeta.textContent = `Fichier : ${file.name} • ${fileSizeMB} MB • ${canvasBW.width}×${canvasBW.height}`;
     updateStatus('--', '--', '--', '--');
-    updateDebugPanel();
     showToast('✅ Image importée avec succès', 'success');
     finishProgress();
-    logDebug('[GRADIENT] handleFile done');
   } catch (err) {
-    logDebug(`[GRADIENT] handleFile error ${err}`);
     console.error(err);
     finishProgress(true);
     showToast(`❌ Impossible de charger cette image: ${err.message || 'erreur inconnue'}`, 'error');
@@ -854,18 +825,6 @@ function finishProgress(error = false) {
   if (loader) loader.style.display = 'none';
 }
 
-function updateDebugPanel() {
-  if (!debugPanel) return;
-  debugPanel.textContent += [
-    `[STATE] image: ${graySnapshot ? canvasBW.width + 'x' + canvasBW.height : 'n/a'}`,
-    `[STATE] posterize: ${posterizeOn}`,
-    `[STATE] grid: ${gridDivisions} div, color ${gridColor}, ep ${gridThickness}`,
-    `[STATE] zoom: ${zoomLevel}`,
-    `[STATE] palette: ${paletteSet.size} crayons`,
-    '---------------------',
-  ].join('\n') + '\n';
-  debugPanel.scrollTop = debugPanel.scrollHeight;
-}
 function applyPreset(key) {
   const p = PRESETS[key];
   if (!p) return;
@@ -881,7 +840,6 @@ function applyPreset(key) {
   gridThicknessValue.textContent = `${gridThickness}px`;
   clearTimeout(gridTimeout);
   gridTimeout = setTimeout(() => renderBWView(), 50);
-  updateDebugPanel();
 }
 
 // Raccourcis clavier

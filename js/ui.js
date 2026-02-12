@@ -1261,8 +1261,9 @@ const TutorialSystem = {
 };
 
 // Initialize tutorial on page load (after loading screen)
-window.addEventListener('load', () => {
-  setTimeout(() => {
-    TutorialSystem.init();
-  }, 1500);
-});
+// DISABLED: Auto-launch can cause issues. Use help button to manually start tutorial.
+// window.addEventListener('load', () => {
+//   setTimeout(() => {
+//     TutorialSystem.init();
+//   }, 1500);
+// });

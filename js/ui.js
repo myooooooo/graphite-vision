@@ -399,6 +399,10 @@ if (exampleGrid) {
 }
 fileInput.addEventListener('change', e => {
   const file = e.target.files[0];
+  if (file) {
+    showToast(`Fichier détecté : ${file.name}`);
+    handleFile(file);
+  }
   e.target.value = '';
 });
 
@@ -410,12 +414,26 @@ async function handleFile(file) {
     if (statusMeta) statusMeta.textContent = `Import de ${file.name}...`;
     resetPalette();
     showProgress();
-   const img = await loadImageFile(file);
-   if (!img.naturalWidth || !img.naturalHeight) throw new Error('Image vide');
+    const img = await loadImageFile(file);
+    if (!img.naturalWidth || !img.naturalHeight) throw new Error('Image vide');
+
+    // Dessiner l'image sur les canvas
+    try {
+      drawImageToCanvas(img, canvasOriginal, ctxOrig);
+    } catch(e) {
+      throw new Error('Erreur lors du dessin original: ' + e.message);
+    }
+    try {
+      drawImageToCanvas(img, canvasBW, ctxBW);
+    } catch(e) {
+      throw new Error('Erreur lors du dessin NB: ' + e.message);
+    }
+
+    // Capturer les données de l'image
     try {
       graySnapshot = ctxBW.getImageData(0, 0, canvasBW.width, canvasBW.height);
     } catch (e) {
-      throw e;
+      throw new Error('Erreur getImageData: ' + e.message);
     }
     if (!graySnapshot || !graySnapshot.data || !graySnapshot.data.length) throw new Error('Snapshot vide');
     try {

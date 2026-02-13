@@ -701,3 +701,200 @@ select:focus-visible {
   transform: scale(1.05);
   box-shadow: 0 4px 12px rgba(154, 77, 255, 0.3);
 }
+
+/* ===== iPad & Tablet Optimizations ===== */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .app-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .dual-canvas {
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .canvas-stack canvas {
+    max-height: 70vh;
+  }
+
+  .sidebar {
+    padding: 20px;
+  }
+
+  /* Larger touch targets for iPad */
+  .btn {
+    min-height: 44px;
+    padding: 12px 20px;
+  }
+
+  .toggle-switch {
+    min-width: 50px;
+    min-height: 28px;
+  }
+}
+
+/* ===== Mobile Touch Optimizations ===== */
+@media (max-width: 768px) {
+  /* Disable hover effects on touch devices */
+  .example-thumb:hover,
+  .palette-item:hover,
+  .btn:hover {
+    transform: none;
+  }
+
+  /* Better touch targets (min 44x44px) */
+  .btn,
+  .btn-help,
+  .btn-copy {
+    min-height: 44px;
+    min-width: 44px;
+    touch-action: manipulation;
+  }
+
+  /* Prevent zoom on input focus */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
+  /* Improve drop zone for touch */
+  .drop-zone {
+    min-height: 200px;
+    padding: 24px 16px;
+  }
+
+  .empty-icon {
+    width: 60px;
+    height: 60px;
+  }
+
+  /* Stack canvas vertically on mobile */
+  .dual-canvas {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  /* Hide magnifier on mobile (too small) */
+  #magnifier {
+    display: none;
+  }
+
+  /* Optimize palette for mobile */
+  .palette-list {
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 8px;
+  }
+
+  .palette-item {
+    padding: 8px;
+    font-size: 11px;
+  }
+
+  /* Better example grid on mobile */
+  .example-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .example-thumb {
+    max-width: 100%;
+  }
+
+  .example-thumb img {
+    height: 120px;
+  }
+}
+
+/* ===== Small Mobile (< 400px) ===== */
+@media (max-width: 400px) {
+  .title {
+    font-size: 12px;
+  }
+
+  .subtitle {
+    display: none;
+  }
+
+  .btn {
+    font-size: 12px;
+    padding: 10px 14px;
+  }
+
+  .status-badge {
+    font-size: 11px;
+  }
+
+  .palette-list {
+    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+  }
+
+  .empty-title {
+    font-size: 16px;
+  }
+
+  .empty-description {
+    font-size: 11px;
+  }
+}
+
+/* ===== Landscape Mobile ===== */
+@media (max-width: 768px) and (orientation: landscape) {
+  .canvas-stack canvas {
+    max-height: 60vh;
+  }
+
+  .dual-canvas {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .sidebar {
+    padding: 12px;
+  }
+
+  .panel-section {
+    gap: 8px;
+  }
+}
+
+/* ===== Touch-friendly improvements ===== */
+@media (hover: none) and (pointer: coarse) {
+  /* Remove all hover states on touch devices */
+  *:hover {
+    background-color: initial;
+  }
+
+  /* Larger tap targets */
+  a, button, input, select, textarea {
+    min-height: 44px;
+  }
+
+  /* Prevent double-tap zoom */
+  * {
+    touch-action: manipulation;
+  }
+
+  /* Better scrolling */
+  .sidebar {
+    -webkit-overflow-scrolling: touch;
+    overflow-y: auto;
+  }
+}
+
+/* ===== Loading screen responsive ===== */
+@media (max-width: 768px) {
+  .loading-title {
+    font-size: 28px;
+  }
+
+  .loading-subtitle {
+    font-size: 12px;
+  }
+
+  .loading-logo {
+    width: 80px;
+    height: 80px;
+  }
+}
